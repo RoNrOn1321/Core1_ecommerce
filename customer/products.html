@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumino E-commerce</title>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
+
+<!-- TailwindCSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  #miniCart { display: none; }
+  #miniCart.active { display: block; }
+  .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: #4ade80; color: white; padding: 10px 20px;
+    border-radius: 6px; display: none; z-index: 1000;
+  }
+</style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Toast Notification -->
+<div id="toast" class="toast">Item added to cart!</div>
+
+<!-- Header -->
+<header class="flex items-center justify-between p-4 bg-white shadow relative">
+  <div class="flex items-center gap-2">
+      <img src="images/logo2.png" alt="Logo" class="h-10">
+      <a class="text-2xl font-bold text-indigo-600">Lumino<span class="text-black">.</span></a>
+  </div>
+
+  <nav class="space-x-4 hidden md:flex">
+      <a href="#home" class="hover:text-indigo-600">Home</a>
+      <a href="#about" class="hover:text-indigo-600">About</a>
+      <a href="#products" class="hover:text-indigo-600">Products</a>
+      <a href="#review" class="hover:text-indigo-600">Review</a>
+      <a href="#contact" class="hover:text-indigo-600">Contact</a>
+  </nav>
+
+  <div class="relative">
+      <!-- Cart Icon -->
+      <button id="cartIcon" class="relative text-2xl">
+          <i class="fas fa-shopping-cart"></i>
+          <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">0</span>
+      </button>
+
+      <!-- Mini Cart -->
+      <div id="miniCart" class="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded p-4 z-50">
+          <h3 class="font-bold mb-2">Cart Items</h3>
+          <div id="miniCartItems" class="space-y-2 max-h-64 overflow-y-auto"></div>
+          <div class="mt-2 flex justify-between items-center">
+              <span class="font-bold">Total: $<span id="miniCartTotal">0.00</span></span>
+              <button id="miniCheckoutBtn" class="bg-green-500 px-3 py-1 rounded text-white hover:bg-green-600 text-sm">Checkout</button>
+          </div>
+      </div>
+  </div>
+</header>
+
+<!-- Home Section -->
+<section class="home p-12 text-center bg-indigo-100" id="home">
+  <h1 class="text-4xl font-bold mb-2">Flowers</h1>
+  <span class="text-lg">Natural & Beautiful Flowers</span>
+  <p class="my-4">Explore our collection of beautiful flowers and pots, perfect for your home and gifts.</p>
+  <a href="#products" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Shop Now</a>
+</section>
+
+<!-- Products Section -->
+<section class="products p-8" id="products">
+  <h2 class="text-3xl font-bold mb-6">Latest <span class="text-indigo-600">Products</span></h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+
+    <!-- Example Product Card -->
+    <div class="box bg-white shadow rounded p-4">
+      <div class="relative">
+        <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-1 rounded">-10%</span>
+        <img src="images/img-1.jpg" alt="Flower Pot" class="w-full h-48 object-cover rounded">
+      </div>
+      <h3 class="mt-2 font-bold">Flower Pot</h3>
+      <div class="flex justify-between items-center mt-1">
+        <span class="price font-semibold text-indigo-600">$12.99 <span class="line-through text-gray-400 text-sm">$15.99</span></span>
+        <button class="cart-btn bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-sm">Add to cart</button>
+      </div>
+    </div>
+
+    <div class="box bg-white shadow rounded p-4">
+      <div class="relative">
+        <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-1 rounded">-15%</span>
+        <img src="images/img-2.jpg" alt="Red Roses" class="w-full h-48 object-cover rounded">
+      </div>
+      <h3 class="mt-2 font-bold">Red Roses</h3>
+      <div class="flex justify-between items-center mt-1">
+        <span class="price font-semibold text-indigo-600">$19.99 <span class="line-through text-gray-400 text-sm">$22.99</span></span>
+        <button class="cart-btn bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-sm">Add to cart</button>
+      </div>
+    </div>
+
+    <div class="box bg-white shadow rounded p-4">
+      <div class="relative">
+        <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-1 rounded">-5%</span>
+        <img src="images/img-3.jpg" alt="Sunflowers" class="w-full h-48 object-cover rounded">
+      </div>
+      <h3 class="mt-2 font-bold">Sunflowers</h3>
+      <div class="flex justify-between items-center mt-1">
+        <span class="price font-semibold text-indigo-600">$9.99 <span class="line-through text-gray-400 text-sm">$10.50</span></span>
+        <button class="cart-btn bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-sm">Add to cart</button>
+      </div>
+    </div>
+
+    <div class="box bg-white shadow rounded p-4">
+      <div class="relative">
+        <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-1 rounded">-20%</span>
+        <img src="images/img-4.jpg" alt="Orchid Pot" class="w-full h-48 object-cover rounded">
+      </div>
+      <h3 class="mt-2 font-bold">Orchid Pot</h3>
+      <div class="flex justify-between items-center mt-1">
+        <span class="price font-semibold text-indigo-600">$25.99 <span class="line-through text-gray-400 text-sm">$32.99</span></span>
+        <button class="cart-btn bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-sm">Add to cart</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Cart Modal -->
+<div id="cartModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white w-96 p-6 rounded-lg relative">
+    <span id="closeCart" class="absolute top-2 right-4 text-2xl cursor-pointer">&times;</span>
+    <h2 class="text-2xl font-bold mb-4">Your Cart</h2>
+    <div id="cartItems" class="space-y-4 max-h-80 overflow-y-auto"></div>
+    <div class="mt-4 flex justify-between items-center">
+      <span class="font-bold">Total: $<span id="cartTotal">0.00</span></span>
+      <button id="checkoutBtn" class="bg-green-500 px-4 py-2 rounded text-white hover:bg-green-600">Checkout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-white shadow p-8 mt-12">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div>
+      <h3 class="font-bold mb-2">Quick Links</h3>
+      <a href="#home" class="block">Home</a>
+      <a href="#about" class="block">About</a>
+      <a href="#products" class="block">Products</a>
+    </div>
+    <div>
+      <h3 class="font-bold mb-2">Extra Links</h3>
+      <a href="#" class="block">My Account</a>
+      <a href="#" class="block">My Order</a>
+      <a href="#" class="block">My Favorite</a>
+    </div>
+    <div>
+      <h3 class="font-bold mb-2">Contact Info</h3>
+      <p>+639-123-45678</p>
+      <p>example@gmail.com</p>
+      <p>Manila, Philippines</p>
+    </div>
+  </div>
+  <div class="mt-4 text-center text-gray-500">Created By <span class="text-indigo-600">Lumino Core 1</span> | All rights reserved</div>
+</footer>
+
+<script>
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+const toast = document.getElementById('toast');
+
+const cartBtn = document.getElementById('cartIcon');
+const miniCart = document.getElementById('miniCart');
+const miniCartItems = document.getElementById('miniCartItems');
+const miniCartTotal = document.getElementById('miniCartTotal');
+const miniCheckoutBtn = document.getElementById('miniCheckoutBtn');
+
+const cartModal = document.getElementById('cartModal');
+const closeCart = document.getElementById('closeCart');
+const cartItemsContainer = document.getElementById('cartItems');
+const cartTotalEl = document.getElementById('cartTotal');
+const checkoutBtn = document.getElementById('checkoutBtn');
+const cartCount = document.getElementById('cartCount');
+
+function saveCart(){
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateCartBadge();
+  renderMiniCart();
+}
+
+function showToast(message){
+  toast.textContent = message;
+  toast.style.display = 'block';
+  setTimeout(()=>{ toast.style.display='none'; },1500);
+}
+
+function updateCartBadge(){
+  const totalQty = cart.reduce((acc,item)=>acc+item.qty,0);
+  cartCount.textContent = totalQty;
+}
+
+function renderCart(){
+  cartItemsContainer.innerHTML='';
+  let total=0;
+  cart.forEach((item,idx)=>{
+    total+=item.price*item.qty;
+    const div = document.createElement('div');
+    div.className="flex justify-between items-center";
+    div.innerHTML=`
+      <div>
+        <h4 class="font-bold">${item.name}</h4>
+        <p>$${item.price.toFixed(2)} x ${item.qty}</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="updateQty(${idx},-1)" class="px-2 bg-gray-200 rounded">-</button>
+        <button onclick="updateQty(${idx},1)" class="px-2 bg-gray-200 rounded">+</button>
+        <button onclick="removeItem(${idx})" class="px-2 bg-red-500 text-white rounded">x</button>
+      </div>
+    `;
+    cartItemsContainer.appendChild(div);
+  });
+  cartTotalEl.textContent=total.toFixed(2);
+  saveCart();
+}
+
+function renderMiniCart(){
+  miniCartItems.innerHTML='';
+  let total=0;
+  cart.forEach((item,idx)=>{
+    total+=item.price*item.qty;
+    const div=document.createElement('div');
+    div.className="flex justify-between items-center";
+    div.innerHTML=`
+      <span>${item.name} x ${item.qty}</span>
+      <div class="flex gap-1 items-center">
+        <span>$${(item.price*item.qty).toFixed(2)}</span>
+        <button onclick="removeItem(${idx})" class="text-red-500 font-bold">x</button>
+      </div>
+    `;
+    miniCartItems.appendChild(div);
+  });
+  miniCartTotal.textContent=total.toFixed(2);
+}
+
+function updateQty(index,change){
+  cart[index].qty+=change;
+  if(cart[index].qty<=0) removeItem(index);
+  renderCart();
+}
+
+function removeItem(index){
+  cart.splice(index,1);
+  renderCart();
+}
+
+document.querySelectorAll('.cart-btn').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    e.preventDefault();
+    const box=btn.closest('.box');
+    const name=box.querySelector('h3').innerText;
+    const price=parseFloat(box.querySelector('.price').innerText.replace('$','').split(' ')[0]);
+    const existing=cart.find(item=>item.name===name);
+    if(existing){ existing.qty+=1; } 
+    else { cart.push({name,price,qty:1}); }
+    renderCart();
+    showToast(`${name} added to cart!`);
+  });
+});
+
+cartBtn.addEventListener('click',()=>{ miniCart.classList.toggle('active'); });
+checkoutBtn.addEventListener('click',()=>{
+  if(cart.length===0){ showToast("Cart is empty!"); return; }
+  const total=cart.reduce((acc,item)=>acc+item.price*item.qty,0);
+  showToast(`Thank you! Total: $${total.toFixed(2)}`);
+  cart=[];
+  renderCart();
+  cartModal.classList.remove('active');
+});
+miniCheckoutBtn.addEventListener('click',()=>{
+  if(cart.length===0){ showToast("Cart is empty!"); return; }
+  const total=cart.reduce((acc,item)=>acc+item.price*item.qty,0);
+  showToast(`Thank you! Total: $${total.toFixed(2)}`);
+  cart=[];
+  renderCart();
+  miniCart.classList.remove('active');
+});
+closeCart.addEventListener('click',()=>cartModal.classList.remove('active'));
+
+renderCart();
+</script>
+
+</body>
+</html> 
