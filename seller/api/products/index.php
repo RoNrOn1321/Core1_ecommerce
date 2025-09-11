@@ -28,7 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $result = $productManager->getProducts($sellerId, $filters);
     
     if ($result['success']) {
-        APIResponse::success($result, 'Products retrieved successfully');
+        echo json_encode([
+            'success' => true,
+            'message' => 'Products retrieved successfully',
+            'products' => $result['products'],
+            'total' => $result['total'],
+            'limit' => $result['limit'],
+            'offset' => $result['offset']
+        ]);
     } else {
         APIResponse::error($result['message']);
     }

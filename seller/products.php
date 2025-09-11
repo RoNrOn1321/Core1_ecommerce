@@ -1,3 +1,17 @@
+<?php
+require_once 'config/database.php';
+require_once 'includes/auth.php';
+
+$auth = new SellerAuth($pdo);
+
+// Check if logged in, redirect to login if not
+if (!$auth->isLoggedIn()) {
+    header('Location: login.php');
+    exit;
+}
+
+$sellerInfo = $auth->getCurrentSeller();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,7 +64,7 @@
                     <button id="profileDropdown" class="flex items-center space-x-2 text-gray-700 hover:text-beige transition-colors">
                         <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" 
                              alt="Profile" class="w-8 h-8 rounded-full">
-                        <span class="hidden md:block">John Seller</span>
+                        <span class="hidden md:block"><?php echo htmlspecialchars(($sellerInfo['first_name'] ?? '') . ' ' . ($sellerInfo['last_name'] ?? '') ?: 'Seller'); ?></span>
                         <i class="fas fa-chevron-down text-sm"></i>
                     </button>
                 </div>
@@ -106,29 +120,22 @@
                     <!-- Search -->
                     <div class="flex-1 max-w-md">
                         <div class="relative">
-                            <input type="text" placeholder="Search products..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                            <input type="text" id="searchInput" placeholder="Search products..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         </div>
                     </div>
                     
                     <!-- Filters -->
                     <div class="flex flex-wrap gap-2">
-                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
-                            <option>All Categories</option>
-                            <option>Electronics</option>
-                            <option>Clothing</option>
-                            <option>Books</option>
-                            <option>Home & Garden</option>
+                        <select id="categoryFilter" data-categories class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                            <option value="">All Categories</option>
                         </select>
-                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
-                            <option>All Status</option>
-                            <option>Active</option>
-                            <option>Draft</option>
-                            <option>Out of Stock</option>
+                        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="draft">Draft</option>
+                            <option value="inactive">Inactive</option>
                         </select>
-                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                            <i class="fas fa-filter mr-2"></i>Filter
-                        </button>
                     </div>
                 </div>
             </div>
@@ -136,7 +143,7 @@
             <!-- Products Table -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table id="productsTable" class="w-full">
                         <thead class="bg-beige text-white">
                             <tr>
                                 <th class="px-6 py-4 text-left">
@@ -152,115 +159,22 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4"><input type="checkbox" class="rounded"></td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center">
-                                        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=60&h=60&fit=crop" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                                        <div class="ml-3">
-                                            <div class="font-medium text-gray-900">Premium Sneakers</div>
-                                            <div class="text-sm text-gray-500">SKU: PSN001</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-gray-700">Footwear</td>
-                                <td class="px-6 py-4">
-                                    <div class="font-semibold text-gray-900">$79.99</div>
-                                    <div class="text-sm text-gray-500 line-through">$99.99</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-medium text-gray-900">45</div>
-                                    <div class="text-sm text-gray-500">units</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                                </td>
-                                <td class="px-6 py-4 text-gray-700">2024-01-15</td>
-                                <td class="px-6 py-4">
-                                    <div class="flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>
-                                        <button class="text-beige hover:text-beige-dark"><i class="fas fa-edit"></i></button>
-                                        <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4"><input type="checkbox" class="rounded"></td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center">
-                                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=60&h=60&fit=crop" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                                        <div class="ml-3">
-                                            <div class="font-medium text-gray-900">Classic Watch</div>
-                                            <div class="text-sm text-gray-500">SKU: CW002</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-gray-700">Accessories</td>
-                                <td class="px-6 py-4">
-                                    <div class="font-semibold text-gray-900">$199.99</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-medium text-gray-900">8</div>
-                                    <div class="text-sm text-gray-500">units</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Low Stock</span>
-                                </td>
-                                <td class="px-6 py-4 text-gray-700">2024-01-10</td>
-                                <td class="px-6 py-4">
-                                    <div class="flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>
-                                        <button class="text-beige hover:text-beige-dark"><i class="fas fa-edit"></i></button>
-                                        <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4"><input type="checkbox" class="rounded"></td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center">
-                                        <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=60&h=60&fit=crop" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                                        <div class="ml-3">
-                                            <div class="font-medium text-gray-900">Designer Sunglasses</div>
-                                            <div class="text-sm text-gray-500">SKU: DS003</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-gray-700">Accessories</td>
-                                <td class="px-6 py-4">
-                                    <div class="font-semibold text-gray-900">$129.99</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-medium text-gray-900">0</div>
-                                    <div class="text-sm text-gray-500">units</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Out of Stock</span>
-                                </td>
-                                <td class="px-6 py-4 text-gray-700">2024-01-05</td>
-                                <td class="px-6 py-4">
-                                    <div class="flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>
-                                        <button class="text-beige hover:text-beige-dark"><i class="fas fa-edit"></i></button>
-                                        <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </td>
+                            <tr>
+                                <td colspan="8" class="text-center py-8 text-gray-500">Loading products...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
                 
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
-                        Showing 1 to 3 of 24 results
+                <div class="pagination-container px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                    <div class="results-text text-sm text-gray-700">
+                        Loading...
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Previous</button>
-                        <button class="px-3 py-2 text-sm bg-beige text-white rounded-lg">1</button>
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">2</button>
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">3</button>
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Next</button>
+                        <button class="pagination-prev px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50" onclick="loadProducts(currentPage - 1, currentFilters)">Previous</button>
+                        <span id="pageNumbers"></span>
+                        <button class="pagination-next px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50" onclick="loadProducts(currentPage + 1, currentFilters)">Next</button>
                     </div>
                 </div>
             </div>
@@ -278,45 +192,60 @@
                     </button>
                 </div>
                 <div class="p-6">
-                    <form>
+                    <form id="productForm">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
-                                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Enter product name">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                                <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Enter product name">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
-                                    <option>Select Category</option>
-                                    <option>Electronics</option>
-                                    <option>Clothing</option>
-                                    <option>Books</option>
-                                    <option>Home & Garden</option>
+                                <select name="category_id" data-categories class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                    <option value="">Select Category</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">SKU</label>
-                                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Product SKU">
+                                <input type="text" name="sku" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Product SKU">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Price ($)</label>
-                                <input type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="0.00">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
+                                <input type="number" name="price" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="0.00">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Compare Price ($)</label>
+                                <input type="number" name="compare_price" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="0.00">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity</label>
-                                <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="0">
+                                <input type="number" name="stock_quantity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="0" value="0">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                    <option value="draft">Draft</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Short Description</label>
+                                <textarea name="short_description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Brief product description"></textarea>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                                <textarea rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Product description"></textarea>
+                                <textarea name="description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Detailed product description"></textarea>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                <div id="imageUploadArea" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-beige transition-colors">
+                                    <input type="file" id="imageInput" multiple accept="image/*" class="hidden">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
                                     <p class="text-gray-600">Click to upload or drag and drop</p>
-                                    <p class="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                    <p class="text-sm text-gray-500">PNG, JPG, GIF, WebP up to 10MB each</p>
                                 </div>
+                                <div id="imagePreview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                                <input type="hidden" name="images" id="imagesInput">
                             </div>
                         </div>
                         <div class="flex justify-end space-x-4 mt-6">
@@ -333,6 +262,13 @@
     <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
 
     <script>
+        // Global variables
+        let products = [];
+        let categories = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentFilters = {};
+
         // Sidebar functionality
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
@@ -355,6 +291,13 @@
         const cancelBtn = document.getElementById('cancelBtn');
 
         addProductBtn.addEventListener('click', () => {
+            const form = document.getElementById('productForm');
+            form.reset();
+            delete form.dataset.productId;
+            uploadedImages = [];
+            updateImagePreview();
+            updateImagesInput();
+            document.querySelector('#productModal h3').textContent = 'Add New Product';
             productModal.classList.remove('hidden');
         });
 
@@ -370,6 +313,426 @@
             if (e.target === productModal) {
                 productModal.classList.add('hidden');
             }
+        });
+
+        // API Functions
+        async function loadProducts(page = 1, filters = {}) {
+            try {
+                const params = new URLSearchParams({
+                    limit: 20,
+                    offset: (page - 1) * 20,
+                    ...filters
+                });
+                
+                const response = await fetch(`api/products/index.php?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.products || [];
+                    totalPages = Math.ceil(data.total / 20);
+                    currentPage = page;
+                    renderProducts();
+                    renderPagination();
+                } else {
+                    showAlert('Error loading products: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error loading products', 'error');
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('api/products/categories.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    categories = data.categories || [];
+                    renderCategoryOptions();
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        async function saveProduct(formData) {
+            try {
+                const response = await fetch('api/products/index.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    productModal.classList.add('hidden');
+                    showAlert('Product saved successfully', 'success');
+                    loadProducts(currentPage, currentFilters);
+                } else {
+                    showAlert('Error saving product: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error saving product', 'error');
+            }
+        }
+
+        async function updateProduct(productId, formData) {
+            try {
+                const response = await fetch(`api/products/detail.php?id=${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    productModal.classList.add('hidden');
+                    showAlert('Product updated successfully', 'success');
+                    loadProducts(currentPage, currentFilters);
+                    delete document.getElementById('productForm').dataset.productId;
+                } else {
+                    showAlert('Error updating product: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error updating product', 'error');
+            }
+        }
+
+        // Render functions
+        function renderProducts() {
+            const tbody = document.querySelector('#productsTable tbody');
+            if (!tbody) return;
+            
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No products found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = products.map(product => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4"><input type="checkbox" class="rounded" data-product-id="${product.id}"></td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <img src="${product.primary_image || 'https://via.placeholder.com/60'}" alt="${product.name}" class="w-12 h-12 rounded-lg object-cover" onerror="this.src='https://via.placeholder.com/60'">
+                            <div class="ml-3">
+                                <div class="font-medium text-gray-900">${product.name}</div>
+                                <div class="text-sm text-gray-500">SKU: ${product.sku || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-700">${product.category_name || 'Uncategorized'}</td>
+                    <td class="px-6 py-4">
+                        <div class="font-semibold text-gray-900">$${parseFloat(product.price).toFixed(2)}</div>
+                        ${product.compare_price ? `<div class="text-sm text-gray-500 line-through">$${parseFloat(product.compare_price).toFixed(2)}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-gray-900">${product.stock_quantity}</div>
+                        <div class="text-sm text-gray-500">units</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(product.status, product.stock_quantity)}">
+                            ${getStatusText(product.status, product.stock_quantity)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-700">${new Date(product.created_at).toLocaleDateString()}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex space-x-2">
+                            <button onclick="viewProduct(${product.id})" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>
+                            <button onclick="editProduct(${product.id})" class="text-beige hover:text-beige-dark"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteProduct(${product.id})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderCategoryOptions() {
+            const selects = document.querySelectorAll('select[data-categories]');
+            selects.forEach(select => {
+                const currentValue = select.value;
+                const placeholder = select.querySelector('option').textContent;
+                select.innerHTML = `<option value="">${placeholder}</option>` +
+                    categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                if (currentValue) select.value = currentValue;
+            });
+        }
+
+        function renderPagination() {
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (!paginationContainer) return;
+            
+            const totalText = document.querySelector('.results-text');
+            if (totalText) {
+                const startItem = (currentPage - 1) * 20 + 1;
+                const endItem = Math.min(currentPage * 20, products.length);
+                totalText.textContent = `Showing ${startItem} to ${endItem} of ${products.length} results`;
+            }
+            
+            const prevBtn = document.querySelector('.pagination-prev');
+            const nextBtn = document.querySelector('.pagination-next');
+            
+            if (prevBtn) prevBtn.disabled = currentPage === 1;
+            if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+        }
+
+        // Utility functions
+        function getStatusClass(status, stock) {
+            if (status === 'active' && stock > 0) return 'bg-green-100 text-green-800';
+            if (status === 'active' && stock <= 5) return 'bg-yellow-100 text-yellow-800';
+            if (stock === 0) return 'bg-red-100 text-red-800';
+            return 'bg-gray-100 text-gray-800';
+        }
+
+        function getStatusText(status, stock) {
+            if (stock === 0) return 'Out of Stock';
+            if (stock <= 5) return 'Low Stock';
+            if (status === 'active') return 'Active';
+            return status.charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `fixed top-4 right-4 z-50 p-4 rounded-lg ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Product actions
+        function viewProduct(id) {
+            window.open(`api/products/detail.php?id=${id}`, '_blank');
+        }
+
+        async function editProduct(id) {
+            try {
+                const response = await fetch(`api/products/detail.php?id=${id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const product = data.product;
+                    
+                    document.querySelector('input[name="name"]').value = product.name || '';
+                    document.querySelector('select[name="category_id"]').value = product.category_id || '';
+                    document.querySelector('input[name="sku"]').value = product.sku || '';
+                    document.querySelector('input[name="price"]').value = product.price || '';
+                    document.querySelector('input[name="compare_price"]').value = product.compare_price || '';
+                    document.querySelector('input[name="stock_quantity"]').value = product.stock_quantity || '0';
+                    document.querySelector('select[name="status"]').value = product.status || 'draft';
+                    document.querySelector('textarea[name="short_description"]').value = product.short_description || '';
+                    document.querySelector('textarea[name="description"]').value = product.description || '';
+                    
+                    document.querySelector('#productModal h3').textContent = 'Edit Product';
+                    document.getElementById('productForm').dataset.productId = id;
+                    productModal.classList.remove('hidden');
+                } else {
+                    showAlert('Error loading product: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error loading product', 'error');
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                try {
+                    const response = await fetch(`api/products/detail.php?id=${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showAlert('Product deleted successfully', 'success');
+                        loadProducts(currentPage, currentFilters);
+                    } else {
+                        showAlert('Error deleting product: ' + data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('Error deleting product', 'error');
+                }
+            }
+        }
+
+        // Form handling
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const productData = Object.fromEntries(formData.entries());
+            
+            // Convert numeric fields
+            if (productData.price) productData.price = parseFloat(productData.price);
+            if (productData.compare_price) productData.compare_price = parseFloat(productData.compare_price);
+            if (productData.stock_quantity) productData.stock_quantity = parseInt(productData.stock_quantity);
+            if (productData.category_id) productData.category_id = parseInt(productData.category_id);
+            
+            // Add images if any uploaded
+            if (uploadedImages.length > 0) {
+                productData.images = uploadedImages;
+            }
+            
+            const productId = form.dataset.productId;
+            if (productId) {
+                await updateProduct(productId, productData);
+            } else {
+                await saveProduct(productData);
+            }
+        });
+
+        // Search and filter handling
+        document.getElementById('searchInput').addEventListener('input', debounce((e) => {
+            currentFilters.search = e.target.value;
+            loadProducts(1, currentFilters);
+        }, 300));
+
+        document.getElementById('categoryFilter').addEventListener('change', (e) => {
+            currentFilters.category_id = e.target.value;
+            loadProducts(1, currentFilters);
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+            currentFilters.status = e.target.value;
+            loadProducts(1, currentFilters);
+        });
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Image upload functionality
+        let uploadedImages = [];
+        
+        document.getElementById('imageUploadArea').addEventListener('click', () => {
+            document.getElementById('imageInput').click();
+        });
+        
+        document.getElementById('imageInput').addEventListener('change', handleImageUpload);
+        
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('imageUploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-beige', 'bg-beige-light/10');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-beige', 'bg-beige-light/10');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-beige', 'bg-beige-light/10');
+            
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length > 0) {
+                handleImageFiles(files);
+            }
+        });
+        
+        async function handleImageUpload(e) {
+            const files = Array.from(e.target.files);
+            await handleImageFiles(files);
+        }
+        
+        async function handleImageFiles(files) {
+            for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    showAlert(`File ${file.name} is too large. Maximum size is 10MB.`, 'error');
+                    continue;
+                }
+                
+                await uploadImage(file);
+            }
+        }
+        
+        async function uploadImage(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('api/products/upload.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('Image uploaded successfully:', data);
+                    uploadedImages.push({
+                        url: data.image_url,
+                        filename: data.filename,
+                        alt_text: ''
+                    });
+                    updateImagePreview();
+                    updateImagesInput();
+                    showAlert('Image uploaded successfully', 'success');
+                } else {
+                    showAlert('Error uploading image: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                showAlert('Error uploading image', 'error');
+            }
+        }
+        
+        function updateImagePreview() {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = uploadedImages.map((image, index) => `
+                <div class="relative group">
+                    <img src="${image.url}" alt="Product image" class="w-full h-24 object-cover rounded-lg" 
+                         onerror="this.src='https://via.placeholder.com/200x150?text=Image+Error'; console.log('Image failed to load:', '${image.url}');">
+                    <button type="button" onclick="removeImage(${index})" 
+                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                        ×
+                    </button>
+                    <input type="text" placeholder="Alt text" value="${image.alt_text}" 
+                           onchange="updateImageAlt(${index}, this.value)"
+                           class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg">
+                </div>
+            `).join('');
+        }
+        
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            updateImagePreview();
+            updateImagesInput();
+        }
+        
+        function updateImageAlt(index, altText) {
+            uploadedImages[index].alt_text = altText;
+            updateImagesInput();
+        }
+        
+        function updateImagesInput() {
+            document.getElementById('imagesInput').value = JSON.stringify(uploadedImages);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadProducts();
         });
     </script>
 </body>

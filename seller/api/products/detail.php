@@ -25,7 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $result = $productManager->getProduct($sellerId, $productId);
     
     if ($result['success']) {
-        APIResponse::success($result['product'], 'Product retrieved successfully');
+        echo json_encode([
+            'success' => true,
+            'message' => 'Product retrieved successfully',
+            'product' => $result['product']
+        ]);
     } else {
         APIResponse::error($result['message'], 404);
     }
@@ -37,7 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $result = $productManager->updateProduct($sellerId, $productId, $input);
     
     if ($result['success']) {
-        APIResponse::success([], $result['message']);
+        echo json_encode([
+            'success' => true,
+            'message' => $result['message']
+        ]);
     } else {
         APIResponse::error($result['message']);
     }
@@ -47,7 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $result = $productManager->deleteProduct($sellerId, $productId);
     
     if ($result['success']) {
-        APIResponse::success([], $result['message']);
+        echo json_encode([
+            'success' => true,
+            'message' => $result['message']
+        ]);
     } else {
         APIResponse::error($result['message']);
     }

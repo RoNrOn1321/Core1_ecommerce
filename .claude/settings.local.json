@@ -7,7 +7,9 @@
       "Bash(del test_api.php test_direct.php debug.php)",
       "Bash(dir:*)",
       "Bash(del \"C:\\xampp\\htdocs\\Core1_ecommerce\\seller\\test_logout.php\")",
-      "Bash(copy dashboard.php dashboard_old_backup.php)"
+      "Bash(copy dashboard.php dashboard_old_backup.php)",
+      "Bash(mysql:*)",
+      "Bash(del test_product.php fix_images.php)"
     ],
     "deny": [],
     "ask": []

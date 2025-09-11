@@ -22,7 +22,11 @@ $productManager = new ProductManager($pdo);
 $result = $productManager->getCategories();
 
 if ($result['success']) {
-    APIResponse::success($result['categories'], 'Categories retrieved successfully');
+    echo json_encode([
+        'success' => true,
+        'message' => 'Categories retrieved successfully',
+        'categories' => $result['categories']
+    ]);
 } else {
     APIResponse::error($result['message']);
 }

@@ -1,4 +1,9 @@
-Customer Browse products & storefront Checkout & order placement Auto-location & address book Track orders via dashboard Access customer support (chat/call) Core Modules 1. Product & Storefront Viewer Product catalog with categories & filters Storefront (seller-branded mini-shop) Product details page (images, price, description, reviews) 2. User Checkout & Order Placement Shopping cart & wishlist Multiple payment methods (COD, card, wallet, GCash/PayMaya, etc.) Discount & promo code support Invoice/receipt generation 3. Auto Location & Address Book GPS-based location detection Saved addresses (home, office, etc.) Address validation & editing 4. Order Tracking Dashboard Real-time tracking (Processing → Shipped → Delivered) Estimated delivery date & courier tracking Cancel/return request option 5. Customer Support & Click-to-Call Live chat support Helpdesk ticketing system One-click call button (VoIP or phone integration) FAQs & knowledge make mysql database structure for this features
+Customer Browse products & storefront Checkout & order placement Auto-location & address book Track orders via dashboard Access customer support (chat/call) Core Modules
+ 1. Product & Storefront Viewer Product catalog with categories & filters Storefront (seller-branded mini-shop) Product details page (images, price, description, reviews)
+  2. User Checkout & Order Placement Shopping cart & wishlist Multiple payment methods (COD, card, wallet, GCash/PayMaya, etc.) Discount & promo code support Invoice/receipt generation 
+  3. Auto Location & Address Book GPS-based location detection Saved addresses (home, office, etc.) Address validation & editing 
+  4. Order Tracking Dashboard Real-time tracking (Processing → Shipped → Delivered) Estimated delivery date & courier tracking Cancel/return request option 
+  5. Customer Support & Click-to-Call Live chat support Helpdesk ticketing system One-click call button (VoIP or phone integration) FAQs & knowledge make mysql database structure for this features
 
 
 -- E-commerce Platform Database Structure
