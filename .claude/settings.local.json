@@ -24,7 +24,15 @@
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%user%'';\")",
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE users;\")",
       "Bash(del \"C:\\xampp\\htdocs\\Core1_ecommerce\\customer\\test_api.php\")",
-      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES;\")"
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES;\")",
+      "Bash(del \"C:\\xampp\\htdocs\\Core1_ecommerce\\customer\\products\\index.php\")",
+      "Bash(del \"C:\\xampp\\htdocs\\Core1_ecommerce\\customer\\products_updated.php\")",
+      "Bash(rm:*)",
+      "Bash(curl:*)",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%cart%'';\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE cart_items;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT COUNT(*) as user_count FROM users;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT id, first_name, email FROM users LIMIT 1;\")"
     ],
     "deny": [],
     "ask": []

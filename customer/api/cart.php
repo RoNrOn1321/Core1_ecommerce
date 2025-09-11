@@ -1,19 +1,20 @@
 <?php
 // Customer Cart API
-require_once '../auth/functions.php';
+
+// Headers are set in index.php
+require_once '../config/database.php';
+
+// Start session for cart functionality
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Check authentication for most cart operations
-$requiresAuth = !in_array($action, ['session']);
-if ($requiresAuth && !$customerAuth->isLoggedIn()) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Authentication required']);
-    exit;
-}
-
-$customerId = $_SESSION['customer_id'] ?? null;
+// For demo purposes, we'll use a default user ID (user with ID 1)
+// In production, implement proper customer authentication
+$userId = $_SESSION['user_id'] ?? 1; // Using John Doe as default user for demo
 
 switch ($action) {
     case 'add':
@@ -37,7 +38,7 @@ switch ($action) {
             $stmt = $pdo->prepare("
                 SELECT id, name, price, stock_quantity 
                 FROM products 
-                WHERE id = ? AND is_active = 1
+                WHERE id = ? AND status = 'published'
             ");
             $stmt->execute([$productId]);
             $product = $stmt->fetch();
@@ -61,10 +62,10 @@ switch ($action) {
             // Check if item already in cart
             $stmt = $pdo->prepare("
                 SELECT id, quantity 
-                FROM shopping_cart 
-                WHERE customer_id = ? AND product_id = ?
+                FROM cart_items 
+                WHERE user_id = ? AND product_id = ?
             ");
-            $stmt->execute([$customerId, $productId]);
+            $stmt->execute([$userId, $productId]);
             $existingItem = $stmt->fetch();
             
             if ($existingItem) {
@@ -83,7 +84,7 @@ switch ($action) {
                 }
                 
                 $stmt = $pdo->prepare("
-                    UPDATE shopping_cart 
+                    UPDATE cart_items 
                     SET quantity = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 ");
@@ -92,10 +93,10 @@ switch ($action) {
             } else {
                 // Add new item
                 $stmt = $pdo->prepare("
-                    INSERT INTO shopping_cart (customer_id, product_id, quantity)
+                    INSERT INTO cart_items (user_id, product_id, quantity)
                     VALUES (?, ?, ?)
                 ");
-                $stmt->execute([$customerId, $productId, $quantity]);
+                $stmt->execute([$userId, $productId, $quantity]);
             }
             
             echo json_encode([
@@ -133,15 +134,15 @@ switch ($action) {
                     p.name,
                     p.price,
                     p.stock_quantity,
-                    (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1) as image
-                FROM shopping_cart sc
+                    (SELECT image_url FROM product_images WHERE product_id = p.id LIMIT 1) as image
+                FROM cart_items sc
                 JOIN products p ON sc.product_id = p.id
-                WHERE sc.customer_id = ? AND p.is_active = 1
+                WHERE sc.user_id = ? AND p.status = 'published'
                 ORDER BY sc.created_at DESC
             ";
             
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$customerId]);
+            $stmt->execute([$userId]);
             $cartItems = $stmt->fetchAll();
             
             $totalAmount = 0;
@@ -200,11 +201,11 @@ switch ($action) {
             // Get cart item and check ownership
             $stmt = $pdo->prepare("
                 SELECT sc.id, sc.product_id, p.stock_quantity, p.name
-                FROM shopping_cart sc
+                FROM cart_items sc
                 JOIN products p ON sc.product_id = p.id
-                WHERE sc.id = ? AND sc.customer_id = ?
+                WHERE sc.id = ? AND sc.user_id = ?
             ");
-            $stmt->execute([$cartId, $customerId]);
+            $stmt->execute([$cartId, $userId]);
             $cartItem = $stmt->fetch();
             
             if (!$cartItem) {
@@ -215,7 +216,7 @@ switch ($action) {
             
             if ($quantity === 0) {
                 // Remove item
-                $stmt = $pdo->prepare("DELETE FROM shopping_cart WHERE id = ?");
+                $stmt = $pdo->prepare("DELETE FROM cart_items WHERE id = ?");
                 $stmt->execute([$cartId]);
                 
                 echo json_encode([
@@ -235,7 +236,7 @@ switch ($action) {
                 }
                 
                 $stmt = $pdo->prepare("
-                    UPDATE shopping_cart 
+                    UPDATE cart_items 
                     SET quantity = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 ");
@@ -272,10 +273,10 @@ switch ($action) {
         
         try {
             $stmt = $pdo->prepare("
-                DELETE FROM shopping_cart 
-                WHERE id = ? AND customer_id = ?
+                DELETE FROM cart_items 
+                WHERE id = ? AND user_id = ?
             ");
-            $stmt->execute([$cartId, $customerId]);
+            $stmt->execute([$cartId, $userId]);
             
             if ($stmt->rowCount() > 0) {
                 echo json_encode([
@@ -301,8 +302,8 @@ switch ($action) {
         }
         
         try {
-            $stmt = $pdo->prepare("DELETE FROM shopping_cart WHERE customer_id = ?");
-            $stmt->execute([$customerId]);
+            $stmt = $pdo->prepare("DELETE FROM cart_items WHERE user_id = ?");
+            $stmt->execute([$userId]);
             
             echo json_encode([
                 'success' => true,
@@ -326,10 +327,10 @@ switch ($action) {
         try {
             $stmt = $pdo->prepare("
                 SELECT COUNT(*) as item_count, SUM(quantity) as total_quantity
-                FROM shopping_cart 
-                WHERE customer_id = ?
+                FROM cart_items 
+                WHERE user_id = ?
             ");
-            $stmt->execute([$customerId]);
+            $stmt->execute([$userId]);
             $result = $stmt->fetch();
             
             echo json_encode([

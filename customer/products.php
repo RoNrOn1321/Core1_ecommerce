@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - Core1 E-commerce</title>
+    <title>Products - Lumino E-commerce</title>
 
     <!-- font cdn link -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
@@ -12,6 +12,62 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- custom css file link -->
     <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+        
+        .product-image {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .price-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .search-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 2px;
+        }
+        
+        .search-inner {
+            background: white;
+            border-radius: 18px;
+        }
+        
+        .category-badge {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #8b4513;
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
 
@@ -19,9 +75,12 @@
 
 <!-- products section starts -->
 <section class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-center text-gray-900 mb-8">
-        Browse <span class="text-amber-600">Products</span>
-    </h1>
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-gray-900 mb-4">
+            Browse <span class="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Products</span>
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">Discover our curated collection of premium products, carefully selected for quality and style.</p>
+    </div>
 
     <!-- Search and Filters -->
     <div class="bg-white p-6 rounded-xl shadow-sm mb-8">
@@ -29,8 +88,17 @@
             <!-- Search -->
             <div class="flex-1 min-w-64">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
-                <input type="text" id="searchInput" placeholder="Search products..." 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" />
+                <div class="search-container">
+                    <div class="search-inner">
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Search for amazing products..." 
+                                   class="w-full px-5 py-4 pr-12 border-0 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-lg" />
+                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-search text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Category Filter -->
@@ -75,8 +143,11 @@
     <div class="text-center mb-6 text-gray-600 font-medium" id="resultsInfo"></div>
 
     <!-- Products Grid -->
-    <div id="productsContainer" class="flex justify-center items-center py-16 text-gray-500">
-        <i class="fas fa-spinner fa-spin mr-3 text-2xl"></i> Loading products...
+    <div id="productsContainer" class="flex justify-center items-center py-20 text-gray-500">
+        <div class="text-center">
+            <div class="loading-spinner w-12 h-12 border-4 border-amber-200 border-t-amber-600 rounded-full mx-auto mb-4"></div>
+            <p class="text-lg font-medium">Loading amazing products...</p>
+        </div>
     </div>
 
     <!-- Pagination -->
@@ -119,14 +190,14 @@
                 <h3 class="text-xl font-bold mb-4">Contact Info</h3>
                 <div class="flex flex-col space-y-2 text-gray-300">
                     <span><i class="fas fa-phone mr-2"></i>+639-123-45678</span>
-                    <span><i class="fas fa-envelope mr-2"></i>support@core1ecommerce.com</span>
+                    <span><i class="fas fa-envelope mr-2"></i>support@luminoecommerce.com</span>
                     <span><i class="fas fa-map-marker-alt mr-2"></i>Manila, Philippines</span>
                 </div>
             </div>
         </div>
 
         <div class="border-t border-gray-800 mt-8 pt-8 text-center">
-            <p class="text-gray-400"> Created By <span class="text-amber-600 font-semibold">Core1 Team</span> | All rights reserved © 2024</p>
+            <p class="text-gray-400"> Created By <span class="text-amber-600 font-semibold">Lumino Team</span> | All rights reserved © 2024</p>
         </div>
     </div>
 </footer>
@@ -233,44 +304,59 @@
         }
 
         const productsHTML = products.map(product => `
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow group">
-                <div class="relative h-64 overflow-hidden">
+            <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group fade-in">
+                <div class="product-image relative h-72 overflow-hidden">
                     <img src="${getProductImage(product.images)}" alt="${product.name}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="absolute top-4 right-4 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
                         <button onclick="addToWishlist(${product.id})" title="Add to Wishlist"
-                                class="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:text-red-500 hover:bg-white transition-all shadow-sm">
-                            <i class="fas fa-heart"></i>
+                                class="w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:text-red-500 hover:bg-white transition-all shadow-lg hover:scale-110">
+                            <i class="fas fa-heart text-lg"></i>
                         </button>
                         <button onclick="viewProduct(${product.id})" title="View Details"
-                                class="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:text-blue-500 hover:bg-white transition-all shadow-sm">
-                            <i class="fas fa-eye"></i>
+                                class="w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:text-blue-500 hover:bg-white transition-all shadow-lg hover:scale-110">
+                            <i class="fas fa-eye text-lg"></i>
                         </button>
                     </div>
+                    ${product.category_name ? `<div class="absolute top-4 left-4 category-badge px-3 py-1 rounded-full text-sm font-medium">${product.category_name}</div>` : ''}
                 </div>
-                <div class="p-5">
-                    <h3 class="font-semibold text-lg text-gray-900 mb-1 line-clamp-2">${product.name}</h3>
-                    <p class="text-sm text-gray-500 mb-2">${product.category_name || 'Uncategorized'}</p>
-                    <p class="font-bold text-xl text-amber-600 mb-3">₱${product.price.toFixed(2)}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.description}</p>
-                    <p class="text-sm mb-4 ${product.in_stock ? 'text-green-600' : 'text-red-500'}">
-                        ${product.in_stock ? `${product.stock_quantity} in stock` : 'Out of stock'}
-                    </p>
+                <div class="p-6">
+                    <h3 class="font-bold text-xl text-gray-900 mb-2 line-clamp-2 group-hover:text-amber-600 transition-colors">${product.name}</h3>
+                    <p class="price-tag font-black text-2xl mb-3">₱${product.price.toFixed(2)}</p>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">${product.description}</p>
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-sm font-medium ${
+                            product.in_stock 
+                                ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full' 
+                                : 'text-red-600 bg-red-50 px-3 py-1 rounded-full'
+                        }">
+                            ${product.in_stock ? `✓ ${product.stock_quantity} in stock` : '✗ Out of stock'}
+                        </p>
+                        <div class="flex items-center text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <span class="text-gray-500 text-sm ml-1">(4.8)</span>
+                        </div>
+                    </div>
                     <button onclick="addToCart(${product.id}, '${product.name}', ${product.price})"
                             ${!product.in_stock ? 'disabled' : ''}
-                            class="w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                            class="w-full py-4 px-6 rounded-xl font-semibold transition-all duration-300 ${
                                 product.in_stock 
-                                    ? 'bg-amber-600 text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:ring-offset-2' 
+                                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700 transform hover:-translate-y-1 hover:shadow-lg' 
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }">
-                        <i class="fas fa-shopping-cart mr-2"></i> 
+                        <i class="fas fa-shopping-cart mr-3"></i> 
                         ${product.in_stock ? 'Add to Cart' : 'Out of Stock'}
                     </button>
                 </div>
             </div>
         `).join('');
 
-        container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${productsHTML}</div>`;
+        container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">${productsHTML}</div>`;
     }
 
     function renderPagination(pagination) {
@@ -341,7 +427,7 @@
             // Otherwise, prepend the uploads path
             return `/Core1_ecommerce/uploads/${imageUrl}`;
         }
-        return 'images/no-image.png';
+        return '../images/no-image.png';
     }
 
     async function addToCart(productId, productName, price) {
@@ -367,6 +453,68 @@
 
     function viewProduct(productId) {
         window.location.href = `products/detail.php?id=${productId}`;
+    }
+    
+    async function updateCartCount() {
+        try {
+            const response = await customerAPI.cart.getCount();
+            if (response.success) {
+                // Find cart count element and update it
+                const cartCount = document.getElementById('cartCount') || document.querySelector('[data-cart-count]');
+                if (cartCount) {
+                    cartCount.textContent = response.data.total_quantity;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update cart count:', error);
+        }
+    }
+    
+    function showToast(message, type = 'success') {
+        // Create toast element if it doesn't exist
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            toast.className = 'fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-x-full opacity-0';
+            document.body.appendChild(toast);
+        }
+        
+        // Remove existing classes and add base classes
+        toast.className = 'fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-x-full opacity-0';
+        
+        // Add type-specific classes
+        switch(type) {
+            case 'success':
+                toast.classList.add('bg-green-500', 'text-white');
+                break;
+            case 'error':
+                toast.classList.add('bg-red-500', 'text-white');
+                break;
+            case 'info':
+                toast.classList.add('bg-blue-500', 'text-white');
+                break;
+            default:
+                toast.classList.add('bg-green-500', 'text-white');
+        }
+        
+        toast.textContent = message;
+        toast.style.display = 'block';
+        
+        // Show toast with animation
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            toast.classList.add('translate-x-0', 'opacity-100');
+        }, 10);
+
+        // Hide toast after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('translate-x-0', 'opacity-100');
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 300);
+        }, 3000);
     }
 </script>
 

@@ -1,8 +1,14 @@
 <?php
 // Customer Products API
 
+// Headers are set in index.php
+require_once '../config/database.php';
+
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
+
+// These variables are passed from index.php routing
+// $requestMethod, $action, $id are available from the router
 
 switch ($action) {
     case '':
