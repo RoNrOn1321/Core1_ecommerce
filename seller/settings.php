@@ -124,7 +124,7 @@
                         <p class="text-sm text-gray-600 mt-1">Update your personal and business information</p>
                     </div>
                     <div class="p-6">
-                        <form class="space-y-6">
+                        <form id="profileForm" class="space-y-6">
                             <!-- Profile Picture -->
                             <div class="flex items-center space-x-6">
                                 <div class="shrink-0">
@@ -142,25 +142,20 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                                    <input type="text" value="John" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                    <input name="first_name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                                    <input type="text" value="Seller" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                    <input name="last_name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                    <input type="email" value="john.seller@email.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                    <input name="email" type="email" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed">
+                                    <p class="text-xs text-gray-500 mt-1">Email cannot be changed. Contact support if needed.</p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                                    <input type="tel" value="+1 (555) 123-4567" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
-                                    <textarea rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">123 Business Street, Suite 100
-New York, NY 10001
-United States</textarea>
+                                    <input name="phone" type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                 </div>
                             </div>
 
@@ -180,19 +175,20 @@ United States</textarea>
                         <p class="text-sm text-gray-600 mt-1">Manage your store appearance and policies</p>
                     </div>
                     <div class="p-6">
-                        <form class="space-y-6">
+                        <form id="storeForm" class="space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Store Name</label>
-                                    <input type="text" value="John's Premium Store" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                    <input name="store_name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Store URL</label>
-                                    <input type="text" value="johns-premium-store" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                    <input name="store_slug" type="text" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed">
+                                    <p class="text-xs text-gray-500 mt-1">Store URL is auto-generated from store name.</p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Store Description</label>
-                                    <textarea rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">Welcome to John's Premium Store! We offer high-quality products with exceptional customer service. Browse our carefully curated selection of premium items.</textarea>
+                                    <textarea name="store_description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige"></textarea>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
@@ -407,21 +403,21 @@ United States</textarea>
                             <!-- Change Password -->
                             <div>
                                 <h4 class="text-lg font-medium text-gray-900 mb-4">Change Password</h4>
-                                <div class="space-y-4">
+                                <form id="passwordForm" class="space-y-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                                        <input type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                        <input name="current_password" type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                                        <input type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                        <input name="new_password" type="password" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                                        <input type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
+                                        <input name="confirm_password" type="password" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                     </div>
-                                    <button type="button" class="btn-beige">Update Password</button>
-                                </div>
+                                    <button type="submit" class="btn-beige">Update Password</button>
+                                </form>
                             </div>
 
                             <!-- Two-Factor Authentication -->
@@ -492,7 +488,224 @@ United States</textarea>
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl">
+            <div class="text-center">
+                <div class="spinner mb-4"></div>
+                <p class="text-gray-600">Loading settings...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notificationsContainer" class="fixed top-20 right-4 z-40"></div>
+
+    <script src="js/seller-api.js"></script>
     <script>
+        // Initialize API client
+        const api = new SellerAPI();
+        let currentSeller = null;
+        let currentPreferences = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeSettings();
+        });
+
+        async function initializeSettings() {
+            try {
+                showLoading(true);
+                
+                // Check authentication
+                try {
+                    const response = await api.getCurrentSeller();
+                    currentSeller = response.data;
+                    
+                    // Load all settings data
+                    await loadAllSettings();
+                    
+                } catch (authError) {
+                    console.log('Not authenticated:', authError);
+                    window.location.href = 'login.php';
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('Settings initialization error:', error);
+                showNotification('Failed to load settings data', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadAllSettings() {
+            try {
+                // Load profile and preferences in parallel
+                const [profileResponse, preferencesResponse] = await Promise.all([
+                    api.getProfile(),
+                    api.getPreferences()
+                ]);
+
+                // Update profile form
+                if (profileResponse.success) {
+                    console.log('Profile data received:', profileResponse.data);
+                    updateProfileForm(profileResponse.data);
+                }
+
+                // Update preferences
+                if (preferencesResponse.success) {
+                    currentPreferences = preferencesResponse.data;
+                    updatePreferencesForm(preferencesResponse.data);
+                }
+
+                // Update store settings (using existing profile data)
+                updateStoreForm(profileResponse.data);
+
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showNotification('Some settings could not be loaded', 'warning');
+            }
+        }
+
+        function updateProfileForm(seller) {
+            console.log('updateProfileForm called with seller:', seller);
+            
+            // Update profile form fields using name attributes for reliability
+            const firstNameInput = document.querySelector('input[name="first_name"]');
+            const lastNameInput = document.querySelector('input[name="last_name"]');
+            const emailInput = document.querySelector('input[name="email"]');
+            const phoneInput = document.querySelector('input[name="phone"]');
+            
+            console.log('Form inputs found:', {
+                firstNameInput: !!firstNameInput,
+                lastNameInput: !!lastNameInput,
+                emailInput: !!emailInput,
+                phoneInput: !!phoneInput
+            });
+            
+            if (firstNameInput) {
+                firstNameInput.value = seller.first_name || '';
+                console.log('First name set to:', seller.first_name);
+            } else {
+                console.error('First name input not found');
+            }
+            
+            if (lastNameInput) {
+                lastNameInput.value = seller.last_name || '';
+                console.log('Last name set to:', seller.last_name);
+            } else {
+                console.error('Last name input not found');
+            }
+            
+            if (emailInput) {
+                emailInput.value = seller.email || '';
+                console.log('Email set to:', seller.email);
+            } else {
+                console.error('Email input not found');
+            }
+            
+            if (phoneInput) {
+                phoneInput.value = seller.phone || '';
+                console.log('Phone set to:', seller.phone);
+            } else {
+                console.error('Phone input not found');
+            }
+
+            // Update header profile name
+            const profileName = document.querySelector('#profileDropdown span');
+            if (profileName) {
+                profileName.textContent = `${seller.first_name || ''} ${seller.last_name || ''}`;
+                console.log('Header profile name updated to:', profileName.textContent);
+            }
+        }
+
+        function updateStoreForm(seller) {
+            // Update store form fields using name attributes for reliability
+            const storeNameInput = document.querySelector('input[name="store_name"]');
+            const storeUrlInput = document.querySelector('input[name="store_slug"]');
+            const descriptionTextarea = document.querySelector('textarea[name="store_description"]');
+            
+            if (storeNameInput) {
+                storeNameInput.value = seller.store_name || '';
+                console.log('Store name set to:', seller.store_name);
+            }
+            if (storeUrlInput) {
+                storeUrlInput.value = seller.store_slug || '';
+                console.log('Store slug set to:', seller.store_slug);
+            }
+            if (descriptionTextarea) {
+                descriptionTextarea.value = seller.store_description || '';
+                console.log('Store description set to:', seller.store_description);
+            }
+        }
+
+        function updatePreferencesForm(preferences) {
+            // Update email notification toggles
+            const emailToggles = {
+                email_new_orders: document.querySelector('#notifications-tab input:nth-of-type(1)'),
+                email_order_updates: document.querySelector('#notifications-tab input:nth-of-type(2)'),
+                email_customer_messages: document.querySelector('#notifications-tab input:nth-of-type(3)'),
+                email_marketing_updates: document.querySelector('#notifications-tab input:nth-of-type(4)')
+            };
+
+            const smsToggles = {
+                sms_urgent_orders: document.querySelector('#notifications-tab .border-t input:nth-of-type(1)'),
+                sms_payment_issues: document.querySelector('#notifications-tab .border-t input:nth-of-type(2)')
+            };
+
+            // Set email preferences
+            Object.keys(emailToggles).forEach(key => {
+                if (emailToggles[key] && preferences[key] !== undefined) {
+                    emailToggles[key].checked = Boolean(parseInt(preferences[key]));
+                }
+            });
+
+            // Set SMS preferences
+            Object.keys(smsToggles).forEach(key => {
+                if (smsToggles[key] && preferences[key] !== undefined) {
+                    smsToggles[key].checked = Boolean(parseInt(preferences[key]));
+                }
+            });
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationsContainer');
+            const notification = document.createElement('div');
+            notification.className = `mb-4 p-4 rounded-lg text-white ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+            notification.textContent = message;
+            
+            container.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('opacity-100');
+            }, 100);
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('opacity-0');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
         // Sidebar functionality
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
@@ -535,6 +748,187 @@ United States</textarea>
                 document.getElementById(targetTab + '-tab').classList.remove('hidden');
             });
         });
+
+        // Form submission handlers
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleProfileUpdate(e.target);
+        });
+
+        document.getElementById('storeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleStoreUpdate(e.target);
+        });
+
+        // Password change form handler
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handlePasswordChange(e.target);
+        });
+
+        // Profile update handler
+        async function handleProfileUpdate(form) {
+            try {
+                showLoading(true);
+                
+                const formData = new FormData(form);
+                const profileData = {
+                    first_name: formData.get('first_name'),
+                    last_name: formData.get('last_name'),
+                    phone: formData.get('phone')
+                };
+
+                const response = await api.updateProfile(profileData);
+                
+                if (response.success) {
+                    showNotification('Profile updated successfully', 'success');
+                    
+                    // Update current seller data
+                    currentSeller.first_name = profileData.first_name;
+                    currentSeller.last_name = profileData.last_name;
+                    currentSeller.phone = profileData.phone;
+                    
+                    // Update profile name display
+                    const profileName = document.querySelector('#profileDropdown span');
+                    if (profileName) {
+                        profileName.textContent = `${profileData.first_name} ${profileData.last_name}`;
+                    }
+                } else {
+                    showNotification(response.message || 'Profile update failed', 'error');
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showNotification('Failed to update profile', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Store update handler
+        async function handleStoreUpdate(form) {
+            try {
+                showLoading(true);
+                
+                const formData = new FormData(form);
+                const storeData = {
+                    store_name: formData.get('store_name'),
+                    store_description: formData.get('store_description')
+                };
+
+                const response = await api.updateStoreProfile(storeData);
+                
+                if (response.success) {
+                    showNotification('Store settings updated successfully', 'success');
+                } else {
+                    showNotification(response.message || 'Store update failed', 'error');
+                }
+            } catch (error) {
+                console.error('Store update error:', error);
+                showNotification('Failed to update store settings', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Password change handler
+        async function handlePasswordChange(form) {
+            try {
+                const formData = new FormData(form);
+                const currentPassword = formData.get('current_password');
+                const newPassword = formData.get('new_password');
+                const confirmPassword = formData.get('confirm_password');
+
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    showNotification('All password fields are required', 'error');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showNotification('New passwords do not match', 'error');
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    showNotification('New password must be at least 6 characters', 'error');
+                    return;
+                }
+
+                showLoading(true);
+
+                const response = await api.changePassword(currentPassword, newPassword, confirmPassword);
+                
+                if (response.success) {
+                    showNotification('Password changed successfully', 'success');
+                    form.reset(); // Clear the form
+                } else {
+                    showNotification(response.message || 'Password change failed', 'error');
+                }
+            } catch (error) {
+                console.error('Password change error:', error);
+                showNotification('Failed to change password', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Notification preferences handler
+        document.addEventListener('change', async (e) => {
+            if (e.target.type === 'checkbox' && e.target.closest('#notifications-tab')) {
+                await handlePreferencesUpdate();
+            }
+        });
+
+        async function handlePreferencesUpdate() {
+            try {
+                // Collect all preference checkboxes
+                const preferences = {};
+                
+                // Email preferences
+                const emailToggles = document.querySelectorAll('#notifications-tab input[type="checkbox"]');
+                emailToggles.forEach((toggle, index) => {
+                    const fieldNames = [
+                        'email_new_orders',
+                        'email_order_updates', 
+                        'email_customer_messages', 
+                        'email_marketing_updates',
+                        'sms_urgent_orders',
+                        'sms_payment_issues'
+                    ];
+                    
+                    if (fieldNames[index]) {
+                        preferences[fieldNames[index]] = toggle.checked;
+                    }
+                });
+
+                const response = await api.updatePreferences(preferences);
+                
+                if (response.success) {
+                    showNotification('Preferences updated', 'success');
+                } else {
+                    showNotification('Failed to update preferences', 'error');
+                }
+            } catch (error) {
+                console.error('Preferences update error:', error);
+                showNotification('Failed to update preferences', 'error');
+            }
+        }
+
+        // Logout functionality
+        async function logout() {
+            try {
+                await api.logout();
+                window.location.href = 'login.php';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = 'login.php';
+            }
+        }
+
+        // Add logout handler to logout button
+        const logoutBtn = document.querySelector('.bg-red-500');
+        if (logoutBtn) {
+            logoutBtn.onclick = logout;
+        }
     </script>
 </body>
 </html>

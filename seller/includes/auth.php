@@ -167,5 +167,95 @@ class SellerAuth {
         $stmt->execute([$slug]);
         return $stmt->fetch() !== false;
     }
+    
+    public function changePassword($currentPassword, $newPassword) {
+        if (!$this->isLoggedIn()) {
+            return ['success' => false, 'message' => 'Not authenticated'];
+        }
+        
+        try {
+            // Get current user data
+            $stmt = $this->pdo->prepare("
+                SELECT u.password_hash 
+                FROM users u 
+                JOIN sellers s ON u.id = s.user_id 
+                WHERE s.id = ?
+            ");
+            $stmt->execute([$_SESSION['seller_id']]);
+            $user = $stmt->fetch();
+            
+            if (!$user) {
+                return ['success' => false, 'message' => 'User not found'];
+            }
+            
+            // Verify current password
+            if (!password_verify($currentPassword, $user['password_hash'])) {
+                return ['success' => false, 'message' => 'Current password is incorrect'];
+            }
+            
+            // Update password
+            $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $this->pdo->prepare("
+                UPDATE users u 
+                JOIN sellers s ON u.id = s.user_id 
+                SET u.password_hash = ? 
+                WHERE s.id = ?
+            ");
+            $stmt->execute([$newPasswordHash, $_SESSION['seller_id']]);
+            
+            return ['success' => true, 'message' => 'Password updated successfully'];
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+    
+    public function updateProfile($profileData) {
+        if (!$this->isLoggedIn()) {
+            return ['success' => false, 'message' => 'Not authenticated'];
+        }
+        
+        try {
+            // Get user_id for this seller
+            $stmt = $this->pdo->prepare("SELECT user_id FROM sellers WHERE id = ?");
+            $stmt->execute([$_SESSION['seller_id']]);
+            $userId = $stmt->fetch()['user_id'];
+            
+            if (!$userId) {
+                return ['success' => false, 'message' => 'Seller not found'];
+            }
+            
+            // Update user profile
+            $userFields = [];
+            $userParams = [];
+            
+            $allowedUserFields = ['first_name', 'last_name', 'phone'];
+            
+            foreach ($allowedUserFields as $field) {
+                if (array_key_exists($field, $profileData)) {
+                    $userFields[] = "$field = ?";
+                    $userParams[] = $profileData[$field];
+                }
+            }
+            
+            if (!empty($userFields)) {
+                $userParams[] = $userId;
+                $sql = "UPDATE users SET " . implode(', ', $userFields) . " WHERE id = ?";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($userParams);
+                
+                // Update session data if name changed
+                if (isset($profileData['first_name']) || isset($profileData['last_name'])) {
+                    $stmt = $this->pdo->prepare("SELECT first_name, last_name FROM users WHERE id = ?");
+                    $stmt->execute([$userId]);
+                    $userData = $stmt->fetch();
+                    $_SESSION['seller_name'] = $userData['first_name'] . ' ' . $userData['last_name'];
+                }
+            }
+            
+            return ['success' => true, 'message' => 'Profile updated successfully'];
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
 }
 ?>

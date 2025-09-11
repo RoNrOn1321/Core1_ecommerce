@@ -280,6 +280,57 @@ class SellerAPI {
         return this.get('/analytics/', { period });
     }
 
+    // ========== SETTINGS METHODS ==========
+
+    /**
+     * Get seller profile information
+     * @returns {Promise<Object>} - Profile data
+     */
+    async getProfile() {
+        return this.get('/auth/profile.php');
+    }
+
+    /**
+     * Update seller profile
+     * @param {Object} profileData - Profile update data
+     * @returns {Promise<Object>} - Update response
+     */
+    async updateProfile(profileData) {
+        return this.put('/auth/profile.php', profileData);
+    }
+
+    /**
+     * Change password
+     * @param {string} currentPassword - Current password
+     * @param {string} newPassword - New password
+     * @param {string} confirmPassword - Confirm new password
+     * @returns {Promise<Object>} - Change password response
+     */
+    async changePassword(currentPassword, newPassword, confirmPassword) {
+        return this.post('/auth/change-password.php', {
+            current_password: currentPassword,
+            new_password: newPassword,
+            confirm_password: confirmPassword
+        });
+    }
+
+    /**
+     * Get notification preferences
+     * @returns {Promise<Object>} - Preferences data
+     */
+    async getPreferences() {
+        return this.get('/settings/preferences.php');
+    }
+
+    /**
+     * Update notification preferences
+     * @param {Object} preferences - Preferences data
+     * @returns {Promise<Object>} - Update response
+     */
+    async updatePreferences(preferences) {
+        return this.put('/settings/preferences.php', preferences);
+    }
+
     // ========== UTILITY METHODS ==========
 
     /**
