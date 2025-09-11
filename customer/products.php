@@ -333,7 +333,13 @@
 
     function getProductImage(images) {
         if (images && images.length > 0) {
-            return `/Core1_ecommerce/uploads/${images[0]}`;
+            const imageUrl = images[0];
+            // Check if it's already a full URL
+            if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) {
+                return imageUrl;
+            }
+            // Otherwise, prepend the uploads path
+            return `/Core1_ecommerce/uploads/${imageUrl}`;
         }
         return 'images/no-image.png';
     }

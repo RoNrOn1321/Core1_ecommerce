@@ -10,7 +10,20 @@
       "Bash(copy dashboard.php dashboard_old_backup.php)",
       "Bash(mysql:*)",
       "Bash(del test_product.php fix_images.php)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT COUNT(*) as product_count FROM products WHERE is_active = 1;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE products;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT status, COUNT(*) as count FROM products GROUP BY status;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE categories;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE sellers;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%image%'';\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE product_images;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%review%'';\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE product_reviews;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%customer%'';\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%user%'';\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE users;\")",
+      "Bash(del \"C:\\xampp\\htdocs\\Core1_ecommerce\\customer\\test_api.php\")"
     ],
     "deny": [],
     "ask": []

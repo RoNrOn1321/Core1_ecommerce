@@ -38,7 +38,7 @@ switch ($action) {
         
         try {
             // Build query
-            $where = ["p.is_active = 1"];
+            $where = ["p.status = 'published'"];
             $params = [];
             
             if (!empty($search)) {
@@ -85,12 +85,13 @@ switch ($action) {
                     p.description,
                     p.price,
                     p.stock_quantity,
+                    p.stock_status,
                     p.sku,
                     p.created_at,
                     c.name as category_name,
                     c.slug as category_slug,
-                    s.business_name as seller_name,
-                    GROUP_CONCAT(pi.image_path) as images
+                    s.store_name as seller_name,
+                    GROUP_CONCAT(pi.image_url) as images
                 FROM products p
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN sellers s ON p.seller_id = s.id
@@ -113,7 +114,7 @@ switch ($action) {
                 $product['price'] = floatval($product['price']);
                 $product['stock_quantity'] = intval($product['stock_quantity']);
                 $product['images'] = $product['images'] ? explode(',', $product['images']) : [];
-                $product['in_stock'] = $product['stock_quantity'] > 0;
+                $product['in_stock'] = $product['stock_quantity'] > 0 && $product['stock_status'] === 'in_stock';
             }
             
             $totalPages = ceil($total / $limit);
@@ -167,7 +168,7 @@ switch ($action) {
                     p.*,
                     c.name as category_name,
                     c.slug as category_slug,
-                    s.business_name as seller_name,
+                    s.store_name as seller_name,
                     s.id as seller_id,
                     AVG(pr.rating) as average_rating,
                     COUNT(pr.id) as review_count
@@ -175,7 +176,7 @@ switch ($action) {
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN sellers s ON p.seller_id = s.id
                 LEFT JOIN product_reviews pr ON p.id = pr.product_id
-                WHERE p.id = ? AND p.is_active = 1
+                WHERE p.id = ? AND p.status = 'published'
                 GROUP BY p.id
             ";
             
@@ -190,7 +191,7 @@ switch ($action) {
             }
             
             // Get product images
-            $stmt = $pdo->prepare("SELECT image_path, image_alt_text FROM product_images WHERE product_id = ? ORDER BY sort_order");
+            $stmt = $pdo->prepare("SELECT image_url, alt_text FROM product_images WHERE product_id = ? ORDER BY sort_order");
             $stmt->execute([$productId]);
             $images = $stmt->fetchAll();
             
@@ -198,14 +199,11 @@ switch ($action) {
             $stmt = $pdo->prepare("
                 SELECT 
                     pr.*,
-                    c.first_name,
-                    c.last_name,
-                    GROUP_CONCAT(ri.image_path) as review_images
+                    u.first_name,
+                    u.last_name
                 FROM product_reviews pr
-                JOIN customers c ON pr.customer_id = c.id
-                LEFT JOIN review_images ri ON pr.id = ri.review_id
-                WHERE pr.product_id = ?
-                GROUP BY pr.id
+                JOIN users u ON pr.user_id = u.id
+                WHERE pr.product_id = ? AND pr.is_approved = 1
                 ORDER BY pr.created_at DESC
                 LIMIT 10
             ");
@@ -217,14 +215,14 @@ switch ($action) {
             $product['stock_quantity'] = intval($product['stock_quantity']);
             $product['average_rating'] = $product['average_rating'] ? round(floatval($product['average_rating']), 1) : null;
             $product['review_count'] = intval($product['review_count']);
-            $product['in_stock'] = $product['stock_quantity'] > 0;
+            $product['in_stock'] = $product['stock_quantity'] > 0 && $product['stock_status'] === 'in_stock';
             $product['images'] = $images;
             
             foreach ($reviews as &$review) {
                 $review['rating'] = intval($review['rating']);
                 $review['customer_name'] = $review['first_name'] . ' ' . substr($review['last_name'], 0, 1) . '.';
-                $review['review_images'] = $review['review_images'] ? explode(',', $review['review_images']) : [];
-                unset($review['first_name'], $review['last_name']);
+                $review['review_images'] = $review['images'] ? json_decode($review['images'], true) : [];
+                unset($review['first_name'], $review['last_name'], $review['images']);
             }
             
             $product['reviews'] = $reviews;
@@ -253,7 +251,7 @@ switch ($action) {
                     c.*,
                     COUNT(p.id) as product_count
                 FROM categories c
-                LEFT JOIN products p ON c.id = p.category_id AND p.is_active = 1
+                LEFT JOIN products p ON c.id = p.category_id AND p.status = 'published'
                 WHERE c.is_active = 1
                 GROUP BY c.id
                 ORDER BY c.name
@@ -301,7 +299,7 @@ switch ($action) {
                     c.name as category_name
                 FROM products p
                 LEFT JOIN categories c ON p.category_id = c.id
-                WHERE p.is_active = 1 
+                WHERE p.status = 'published' 
                 AND (p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)
                 ORDER BY 
                     CASE 
