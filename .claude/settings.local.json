@@ -23,7 +23,8 @@
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%customer%'';\")",
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%user%'';\")",
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE users;\")",
-      "Bash(del \"C:\\xampp\\htdocs\\Core1_ecommerce\\customer\\test_api.php\")"
+      "Bash(del \"C:\\xampp\\htdocs\\Core1_ecommerce\\customer\\test_api.php\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES;\")"
     ],
     "deny": [],
     "ask": []
