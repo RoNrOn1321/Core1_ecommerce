@@ -1,89 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Lumino</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Core1 E-commerce</title>
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- BoxIcons CDN -->
-  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- font cdn link -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- custom css file link -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-50">
 
-  <div class="bg-white p-10 rounded-2xl shadow-lg w-96">
-    <div class="text-center mb-6">
-      <img src="images/logo1.png" alt="Lumino Logo" class="w-20 mx-auto">
-      <h2 class="text-2xl font-bold mt-2">Login to Lumino</h2>
+<?php 
+// Redirect if already logged in
+require_once 'auth/functions.php';
+requireGuest();
+?>
+
+<?php include 'components/navbar.php'; ?>
+
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="mx-auto h-12 w-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-sign-in-alt text-amber-600 text-xl"></i>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Sign in to your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Or
+                <a href="register.php" class="font-medium text-amber-600 hover:text-amber-500">
+                    create a new account
+                </a>
+            </p>
+        </div>
+        <form class="mt-8 space-y-6" id="loginForm">
+            <div class="rounded-md shadow-sm space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" required
+                           class="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent focus:z-10 sm:text-sm"
+                           placeholder="Enter your email address">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <input id="password" name="password" type="password" autocomplete="current-password" required
+                               class="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent focus:z-10 sm:text-sm pr-10"
+                               placeholder="Enter your password">
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <i class="fas fa-eye text-gray-400 hover:text-gray-600" id="passwordIcon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember-me" name="remember-me" type="checkbox"
+                           class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+                        Remember me
+                    </label>
+                </div>
+
+                <div class="text-sm">
+                    <a href="forgot-password.php" class="font-medium text-amber-600 hover:text-amber-500">
+                        Forgot your password?
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" id="loginButton" 
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i class="fas fa-sign-in-alt text-amber-500 group-hover:text-amber-400" aria-hidden="true"></i>
+                    </span>
+                    <span id="buttonText">Sign in</span>
+                    <i id="loadingSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                </button>
+            </div>
+
+            <div class="text-center">
+                <span class="text-sm text-gray-500">Don't have an account? </span>
+                <a href="register.php" class="text-sm font-medium text-amber-600 hover:text-amber-500">
+                    Sign up now
+                </a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <!-- Error Message -->
-    <p id="errorMsg" class="text-red-500 text-sm text-center mb-3 hidden">Invalid email or password</p>
+<script src="assets/js/customer-api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    const button = document.getElementById('loginButton');
+    const buttonText = document.getElementById('buttonText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
 
-    <form id="loginForm" class="space-y-5">
-      <div>
-        <input type="email" id="email" placeholder="Email" required
-          class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-      </div>
-
-      <div class="relative">
-        <input type="password" id="password" placeholder="Password" required
-          class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-        <i id="togglePassword" class='bx bx-hide absolute right-3 top-3 text-gray-500 cursor-pointer'></i>
-      </div>
-
-      <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition">Login</button>
-    </form>
-
-    <div class="text-center mt-4 text-sm text-gray-600">
-      <p>Don't have an account? <a href="register.html" class="text-green-500 hover:underline">Register</a></p>
-      <p><a href="#" class="text-green-500 hover:underline">Forgot Password?</a></p>
-    </div>
-  </div>
-
-  <script>
-    // Eye toggle
-    const togglePassword = document.querySelector('#togglePassword');
-    const password = document.querySelector('#password');
-
-    togglePassword.addEventListener('click', () => {
-      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-      password.setAttribute('type', type);
-      togglePassword.classList.toggle('bx-show');
-      togglePassword.classList.toggle('bx-hide');
+    // Toggle password visibility
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        passwordIcon.className = type === 'password' ? 'fas fa-eye text-gray-400 hover:text-gray-600' : 'fas fa-eye-slash text-gray-400 hover:text-gray-600';
     });
 
-    // Frontend login simulation
-    const loginForm = document.querySelector('#loginForm');
-    const errorMsg = document.querySelector('#errorMsg');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
-    // Sample frontend users with roles
-    const users = [
-      { email: 'admin@gmail.com', password: 'admin123', name: 'Admin', role: 'admin' },
-      { email: 'user@gmail.com', password: 'user123', name: 'User', role: 'user' }
-    ];
-
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const email = document.querySelector('#email').value;
-      const pass = document.querySelector('#password').value;
-
-      const user = users.find(u => u.email === email && u.password === pass);
-
-      if(user) {
-        if(user.role === 'admin') {
-          alert(`Welcome ${user.name}! Redirecting to Admin Dashboard...`);
-          window.location.href = "http://localhost/core1-ecommerce/admin/index.html";
-        } else if(user.role === 'user') {
-          alert(`Welcome ${user.name}! Redirecting to Customer Dashboard...`);
-          window.location.href = "customer/dashboard.html";
+        if (!email || !password) {
+            showToast('Please fill in all fields', 'error');
+            return;
         }
-      } else {
-        errorMsg.classList.remove('hidden');
-      }
+
+        // Disable button and show loading
+        button.disabled = true;
+        buttonText.textContent = 'Signing in...';
+        loadingSpinner.classList.remove('hidden');
+
+        try {
+            const response = await customerAPI.auth.login(email, password);
+
+            if (response.success) {
+                showToast('Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.php';
+                }, 1500);
+            } else {
+                showToast(response.message, 'error');
+            }
+        } catch (error) {
+            showToast('Login failed. Please try again.', 'error');
+            console.error('Login error:', error);
+        } finally {
+            // Re-enable button and hide loading
+            button.disabled = false;
+            buttonText.textContent = 'Sign in';
+            loadingSpinner.classList.add('hidden');
+        }
     });
-  </script>
+});
+</script>
+
 </body>
 </html>
