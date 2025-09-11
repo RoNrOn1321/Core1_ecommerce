@@ -140,8 +140,8 @@ try {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Seller Details - ShopZone Admin">
-    <meta name="author" content="ShopZone Team">
+    <meta name="description" content="Seller Details - LuminoAdmin">
+    <meta name="author" content="Lumino Team">
     <title>Seller Details - <?= htmlspecialchars($seller['business_name'] ?? 'Unknown Business') ?></title>
     <!-- Simple bar CSS -->
     <link rel="stylesheet" href="css/simplebar.css">

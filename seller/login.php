@@ -181,13 +181,22 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            // Simulate login process
             try {
-                // This would normally be an API call
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Make API call to login
+                const response = await fetch('api/auth/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
                 
-                // For demo purposes, check for demo credentials
-                if (email === 'seller@demo.com' && password === 'password') {
+                const data = await response.json();
+                
+                if (data.success) {
                     // Success
                     showMessage(successMessage);
                     
@@ -197,6 +206,7 @@
                     }, 2000);
                 } else {
                     // Error
+                    document.getElementById('errorText').textContent = data.message || 'Login failed';
                     showMessage(errorMessage);
                 }
             } catch (error) {

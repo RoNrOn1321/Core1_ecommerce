@@ -124,7 +124,7 @@ try {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="User Details - ShopZone Admin">
-    <meta name="author" content="ShopZone Team">
+    <meta name="author" content="Lumino Team">
     <title>User Details - <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></title>
     <!-- Simple bar CSS -->
     <link rel="stylesheet" href="css/simplebar.css">

@@ -55,10 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="ShopZone Admin Panel">
-    <meta name="author" content="ShopZone Team">
+    <meta name="description" content="Lumino Admin Panel">
+    <meta name="author" content="Lumino Team">
     <link rel="icon" href="favicon.html">
-    <title>Admin Login - ShopZone</title>
+    <title>Admin Login - Lumino</title>
     <!-- Simple bar CSS -->
     <link rel="stylesheet" href="css/simplebar.css">
     <!-- Fonts CSS -->
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </g>
                     </svg>
                 </a>
-                <h1 class="h6 mb-3">ShopZone Admin</h1>
+                <h1 class="h6 mb-3">Lumino Admin</h1>
                 
                 <?php if (!empty($error_message)): ?>
                     <div class="alert alert-danger" role="alert">
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </label>
                 </div>
                 <button class="btn btn-lg btn-primary btn-block" type="submit">Sign In</button>
-                <p class="mt-5 mb-3 text-muted">© 2024 ShopZone</p>
+                <p class="mt-5 mb-3 text-muted">© 2024 Lumino</p>
             </form>
         </div>
     </div>

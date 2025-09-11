@@ -359,16 +359,42 @@
             registerSpinner.classList.remove('hidden');
             
             try {
-                // Simulate registration process
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Get form data
+                const formData = {
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    first_name: document.getElementById('firstName').value,
+                    last_name: document.getElementById('lastName').value,
+                    phone: document.getElementById('phone').value,
+                    store_name: document.getElementById('businessName').value,
+                    business_type: document.getElementById('businessType').value,
+                    store_description: ''
+                };
                 
-                // Success
-                showMessage(successMessage, 2000);
+                // Make API call to register
+                const response = await fetch('api/auth/register.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
                 
-                // Redirect to login after 2 seconds
-                setTimeout(() => {
-                    window.location.href = 'login.php';
-                }, 2000);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Success
+                    showMessage(successMessage, 2000);
+                    
+                    // Redirect to login after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = 'login.php';
+                    }, 2000);
+                } else {
+                    // Error
+                    document.getElementById('errorText').textContent = data.message || 'Registration failed';
+                    showMessage(errorMessage);
+                }
                 
             } catch (error) {
                 // Handle error

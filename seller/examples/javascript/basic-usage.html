@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller API - Basic Usage Example</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Seller API - Basic Usage Example</h1>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h3>Authentication</h3>
+                <div id="auth-section">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" value="seller@example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" value="password123">
+                    </div>
+                    <button class="btn btn-primary" onclick="login()">Login</button>
+                    <button class="btn btn-secondary" onclick="getCurrentSeller()">Get Current Seller</button>
+                    <button class="btn btn-danger" onclick="logout()">Logout</button>
+                </div>
+                
+                <div class="mt-4">
+                    <h3>Products</h3>
+                    <button class="btn btn-info" onclick="getProducts()">Get Products</button>
+                    <button class="btn btn-success" onclick="createSampleProduct()">Create Sample Product</button>
+                    <button class="btn btn-warning" onclick="getCategories()">Get Categories</button>
+                </div>
+                
+                <div class="mt-4">
+                    <h3>Orders</h3>
+                    <button class="btn btn-info" onclick="getOrders()">Get Orders</button>
+                    <button class="btn btn-primary" onclick="getOrderStats()">Get Order Stats</button>
+                </div>
+                
+                <div class="mt-4">
+                    <h3>Store & Analytics</h3>
+                    <button class="btn btn-info" onclick="getStoreProfile()">Get Store Profile</button>
+                    <button class="btn btn-primary" onclick="getDashboard()">Get Dashboard</button>
+                    <button class="btn btn-success" onclick="getAnalytics()">Get Analytics</button>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <h3>API Response</h3>
+                <div class="border p-3" style="height: 600px; overflow-y: auto;">
+                    <pre id="api-response" class="mb-0"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/seller-api.js"></script>
+    <script>
+        // Initialize the API client
+        const api = new SellerAPI();
+        
+        function displayResponse(data) {
+            document.getElementById('api-response').textContent = JSON.stringify(data, null, 2);
+        }
+        
+        function displayError(error) {
+            document.getElementById('api-response').textContent = `Error: ${error.message}`;
+        }
+        
+        // Authentication functions
+        async function login() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const response = await api.login(email, password);
+                displayResponse(response);
+                console.log('Login successful:', response);
+            } catch (error) {
+                displayError(error);
+                console.error('Login failed:', error);
+            }
+        }
+        
+        async function getCurrentSeller() {
+            try {
+                const response = await api.getCurrentSeller();
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        async function logout() {
+            try {
+                const response = await api.logout();
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        // Product functions
+        async function getProducts() {
+            try {
+                const response = await api.getProducts({ limit: 10, offset: 0 });
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        async function createSampleProduct() {
+            try {
+                const productData = {
+                    name: 'Sample Product',
+                    description: 'This is a sample product created via API',
+                    short_description: 'Sample product',
+                    price: 29.99,
+                    compare_price: 39.99,
+                    sku: 'SAMPLE001',
+                    stock_quantity: 100,
+                    status: 'draft'
+                };
+                const response = await api.createProduct(productData);
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        async function getCategories() {
+            try {
+                const response = await api.getCategories();
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        // Order functions
+        async function getOrders() {
+            try {
+                const response = await api.getOrders({ limit: 10, offset: 0 });
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        async function getOrderStats() {
+            try {
+                const response = await api.getOrderStats();
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        // Store functions
+        async function getStoreProfile() {
+            try {
+                const response = await api.getStoreProfile();
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        async function getDashboard() {
+            try {
+                const response = await api.getDashboard();
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        async function getAnalytics() {
+            try {
+                const response = await api.getAnalytics(30);
+                displayResponse(response);
+            } catch (error) {
+                displayError(error);
+            }
+        }
+        
+        // Check authentication status on page load
+        window.addEventListener('load', async () => {
+            try {
+                await getCurrentSeller();
+                console.log('Already authenticated');
+            } catch (error) {
+                console.log('Not authenticated');
+            }
+        });
+    </script>
+</body>
+</html>
