@@ -52,10 +52,10 @@ try {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="ShopZone Admin Dashboard">
-    <meta name="author" content="ShopZone Team">
+    <meta name="description" content="Lumino Admin Dashboard">
+    <meta name="author" content="Lumino Team">
     <link rel="icon" href="favicon.html">
-    <title>Dashboard - ShopZone Admin</title>
+    <title>Dashboard - Lumino Admin</title>
     <!-- Simple bar CSS -->
     <link rel="stylesheet" href="css/simplebar.css">
     <!-- Fonts CSS -->

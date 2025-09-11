@@ -1,88 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Seller Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'beige': '#b48d6b',
-                        'beige-light': '#c8a382',
-                        'beige-dark': '#9d7a5a',
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 font-sans">
-    <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 h-20">
-        <div class="flex items-center justify-between px-6 h-full">
-            <div class="flex items-center">
-                <button id="sidebarToggle" class="mr-4 lg:hidden">
-                    <i class="fas fa-bars text-2xl text-gray-700 hover:text-beige transition-colors"></i>
-                </button>
-                <div class="logo text-3xl font-bold text-gray-800">
-                    Lumino<span class="text-beige">Shop</span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="relative">
-                    <button class="text-gray-700 hover:text-beige transition-colors">
-                        <i class="fas fa-bell text-xl"></i>
-                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-                    </button>
-                </div>
-                <div class="relative">
-                    <button class="text-gray-700 hover:text-beige transition-colors">
-                        <i class="fas fa-envelope text-xl"></i>
-                        <span class="absolute -top-2 -right-2 bg-beige text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">5</span>
-                    </button>
-                </div>
-                <div class="relative">
-                    <button id="profileDropdown" class="flex items-center space-x-2 text-gray-700 hover:text-beige transition-colors">
-                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" 
-                             alt="Profile" class="w-8 h-8 rounded-full">
-                        <span class="hidden md:block">John Seller</span>
-                        <i class="fas fa-chevron-down text-sm"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
+<?php
+$page_title = "Settings";
+?>
+<?php include 'includes/header.php'; ?>
 
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 pt-20">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">Seller Portal</h3>
-            <p class="text-sm text-gray-600 mt-1">Manage your store</p>
-        </div>
-        <nav class="mt-6">
-            <ul class="space-y-2 px-4">
-                <li><a href="dashboard.php" class="sidebar-link"><i class="fas fa-tachometer-alt w-5"></i><span class="ml-3">Dashboard</span></a></li>
-                <li><a href="products.php" class="sidebar-link"><i class="fas fa-box w-5"></i><span class="ml-3">Products</span><span class="ml-auto bg-beige text-white text-xs px-2 py-1 rounded-full">24</span></a></li>
-                <li><a href="orders.php" class="sidebar-link"><i class="fas fa-shopping-cart w-5"></i><span class="ml-3">Orders</span><span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">8</span></a></li>
-                <li><a href="customers.php" class="sidebar-link"><i class="fas fa-users w-5"></i><span class="ml-3">Customers</span></a></li>
-                <li><a href="analytics.php" class="sidebar-link"><i class="fas fa-chart-line w-5"></i><span class="ml-3">Analytics</span></a></li>
-                <li><a href="reviews.php" class="sidebar-link"><i class="fas fa-star w-5"></i><span class="ml-3">Reviews</span></a></li>
-                <li><a href="promotions.php" class="sidebar-link"><i class="fas fa-percent w-5"></i><span class="ml-3">Promotions</span></a></li>
-                <li><a href="finances.php" class="sidebar-link"><i class="fas fa-wallet w-5"></i><span class="ml-3">Finances</span></a></li>
-                <li><a href="settings.php" class="sidebar-link active"><i class="fas fa-cog w-5"></i><span class="ml-3">Settings</span></a></li>
-            </ul>
-        </nav>
-        <div class="absolute bottom-6 left-4 right-4">
-            <button class="w-full flex items-center justify-center px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-            </button>
-        </div>
-    </aside>
+<?php include 'includes/sidebar.php'; ?>
 
     <!-- Main Content -->
     <main class="lg:ml-64 pt-20 min-h-screen">
@@ -485,51 +406,21 @@
         </div>
     </main>
 
-    <!-- Mobile Sidebar Overlay -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl">
-            <div class="text-center">
-                <div class="spinner mb-4"></div>
-                <p class="text-gray-600">Loading settings...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notifications Container -->
-    <div id="notificationsContainer" class="fixed top-20 right-4 z-40"></div>
-
-    <script src="js/seller-api.js"></script>
+    <!-- Page-specific scripts -->
     <script>
-        // Initialize API client
-        const api = new SellerAPI();
-        let currentSeller = null;
-        let currentPreferences = null;
-
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Page-specific initialization for settings
+        async function initializePageData() {
             await initializeSettings();
-        });
+        }
+        
+        let currentPreferences = null;
 
         async function initializeSettings() {
             try {
                 showLoading(true);
                 
-                // Check authentication
-                try {
-                    const response = await api.getCurrentSeller();
-                    currentSeller = response.data;
-                    
-                    // Load all settings data
-                    await loadAllSettings();
-                    
-                } catch (authError) {
-                    console.log('Not authenticated:', authError);
-                    window.location.href = 'login.php';
-                    return;
-                }
+                // Load all settings data
+                await loadAllSettings();
                 
             } catch (error) {
                 console.error('Settings initialization error:', error);
@@ -611,13 +502,6 @@
             } else {
                 console.error('Phone input not found');
             }
-
-            // Update header profile name
-            const profileName = document.querySelector('#profileDropdown span');
-            if (profileName) {
-                profileName.textContent = `${seller.first_name || ''} ${seller.last_name || ''}`;
-                console.log('Header profile name updated to:', profileName.textContent);
-            }
         }
 
         function updateStoreForm(seller) {
@@ -668,58 +552,6 @@
                 }
             });
         }
-
-        function showLoading(show) {
-            const overlay = document.getElementById('loadingOverlay');
-            if (show) {
-                overlay.classList.remove('hidden');
-            } else {
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function showNotification(message, type = 'info') {
-            const container = document.getElementById('notificationsContainer');
-            const notification = document.createElement('div');
-            notification.className = `mb-4 p-4 rounded-lg text-white ${
-                type === 'success' ? 'bg-green-500' : 
-                type === 'error' ? 'bg-red-500' : 
-                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-            }`;
-            notification.textContent = message;
-            
-            container.appendChild(notification);
-            
-            // Show notification
-            setTimeout(() => {
-                notification.classList.add('opacity-100');
-            }, 100);
-            
-            // Hide after 5 seconds
-            setTimeout(() => {
-                notification.classList.add('opacity-0');
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 5000);
-        }
-
-        // Sidebar functionality
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-            sidebarOverlay.classList.toggle('hidden');
-        });
-
-        sidebarOverlay.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
-        });
 
         // Settings tabs functionality
         const settingsTabs = document.querySelectorAll('.settings-tab');
@@ -912,23 +744,6 @@
                 showNotification('Failed to update preferences', 'error');
             }
         }
-
-        // Logout functionality
-        async function logout() {
-            try {
-                await api.logout();
-                window.location.href = 'login.php';
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = 'login.php';
-            }
-        }
-
-        // Add logout handler to logout button
-        const logoutBtn = document.querySelector('.bg-red-500');
-        if (logoutBtn) {
-            logoutBtn.onclick = logout;
-        }
     </script>
-</body>
-</html>
+
+<?php include 'includes/footer.php'; ?>

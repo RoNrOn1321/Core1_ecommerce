@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Dashboard - Core1 Ecommerce</title>
+    <title>Seller Dashboard - Lumino Ecommerce</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -63,7 +63,7 @@
                     <i class="fas fa-bars text-2xl text-gray-700 hover:text-beige transition-colors"></i>
                 </button>
                 <div class="logo text-3xl font-bold text-gray-800">
-                    Core1<span class="text-beige">Seller</span>
+                    Lumino<span class="text-beige">Shop</span>
                 </div>
             </div>
 

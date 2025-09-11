@@ -11,92 +11,11 @@ if (!$auth->isLoggedIn()) {
 }
 
 $sellerInfo = $auth->getCurrentSeller();
+$page_title = "Products";
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - Seller Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'beige': '#b48d6b',
-                        'beige-light': '#c8a382',
-                        'beige-dark': '#9d7a5a',
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 font-sans">
-    <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 h-20">
-        <div class="flex items-center justify-between px-6 h-full">
-            <div class="flex items-center">
-                <button id="sidebarToggle" class="mr-4 lg:hidden">
-                    <i class="fas fa-bars text-2xl text-gray-700 hover:text-beige transition-colors"></i>
-                </button>
-                <div class="logo text-3xl font-bold text-gray-800">
-                    Lumino<span class="text-beige">Shop</span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="relative">
-                    <button class="text-gray-700 hover:text-beige transition-colors">
-                        <i class="fas fa-bell text-xl"></i>
-                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-                    </button>
-                </div>
-                <div class="relative">
-                    <button class="text-gray-700 hover:text-beige transition-colors">
-                        <i class="fas fa-envelope text-xl"></i>
-                        <span class="absolute -top-2 -right-2 bg-beige text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">5</span>
-                    </button>
-                </div>
-                <div class="relative">
-                    <button id="profileDropdown" class="flex items-center space-x-2 text-gray-700 hover:text-beige transition-colors">
-                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" 
-                             alt="Profile" class="w-8 h-8 rounded-full">
-                        <span class="hidden md:block"><?php echo htmlspecialchars(($sellerInfo['first_name'] ?? '') . ' ' . ($sellerInfo['last_name'] ?? '') ?: 'Seller'); ?></span>
-                        <i class="fas fa-chevron-down text-sm"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
+<?php include 'includes/header.php'; ?>
 
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 pt-20">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">Seller Portal</h3>
-            <p class="text-sm text-gray-600 mt-1">Manage your store</p>
-        </div>
-        <nav class="mt-6">
-            <ul class="space-y-2 px-4">
-                <li><a href="dashboard.php" class="sidebar-link"><i class="fas fa-tachometer-alt w-5"></i><span class="ml-3">Dashboard</span></a></li>
-                <li><a href="products.php" class="sidebar-link active"><i class="fas fa-box w-5"></i><span class="ml-3">Products</span><span class="ml-auto bg-beige text-white text-xs px-2 py-1 rounded-full">24</span></a></li>
-                <li><a href="orders.php" class="sidebar-link"><i class="fas fa-shopping-cart w-5"></i><span class="ml-3">Orders</span><span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">8</span></a></li>
-                <li><a href="customers.php" class="sidebar-link"><i class="fas fa-users w-5"></i><span class="ml-3">Customers</span></a></li>
-                <li><a href="analytics.php" class="sidebar-link"><i class="fas fa-chart-line w-5"></i><span class="ml-3">Analytics</span></a></li>
-                <li><a href="reviews.php" class="sidebar-link"><i class="fas fa-star w-5"></i><span class="ml-3">Reviews</span></a></li>
-                <li><a href="promotions.php" class="sidebar-link"><i class="fas fa-percent w-5"></i><span class="ml-3">Promotions</span></a></li>
-                <li><a href="finances.php" class="sidebar-link"><i class="fas fa-wallet w-5"></i><span class="ml-3">Finances</span></a></li>
-                <li><a href="settings.php" class="sidebar-link"><i class="fas fa-cog w-5"></i><span class="ml-3">Settings</span></a></li>
-            </ul>
-        </nav>
-        <div class="absolute bottom-6 left-4 right-4">
-            <button class="w-full flex items-center justify-center px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-            </button>
-        </div>
-    </aside>
+<?php include 'includes/sidebar.php'; ?>
 
     <!-- Main Content -->
     <main class="lg:ml-64 pt-20 min-h-screen">
@@ -132,9 +51,8 @@ $sellerInfo = $auth->getCurrentSeller();
                         </select>
                         <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                             <option value="">All Status</option>
-                            <option value="active">Active</option>
+                            <option value="published">Published</option>
                             <option value="draft">Draft</option>
-                            <option value="inactive">Inactive</option>
                         </select>
                     </div>
                 </div>
@@ -209,11 +127,11 @@ $sellerInfo = $auth->getCurrentSeller();
                                 <input type="text" name="sku" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="Product SKU">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Price (₱) *</label>
                                 <input type="number" name="price" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="0.00">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Compare Price ($)</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Compare Price (₱)</label>
                                 <input type="number" name="compare_price" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige" placeholder="0.00">
                             </div>
                             <div>
@@ -224,8 +142,7 @@ $sellerInfo = $auth->getCurrentSeller();
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                 <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
                                     <option value="draft">Draft</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
+                                    <option value="published">Published</option>
                                 </select>
                             </div>
                             <div class="md:col-span-2">
@@ -258,8 +175,22 @@ $sellerInfo = $auth->getCurrentSeller();
         </div>
     </div>
 
-    <!-- Mobile Sidebar Overlay -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
+    <!-- Product Details Modal -->
+    <div id="productDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Product Details</h3>
+                    <button id="closeDetailsModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="productDetailsContent" class="p-6">
+                    <div class="text-center py-8 text-gray-500">Loading product details...</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Global variables
@@ -269,20 +200,11 @@ $sellerInfo = $auth->getCurrentSeller();
         let totalPages = 1;
         let currentFilters = {};
 
-        // Sidebar functionality
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-            sidebarOverlay.classList.toggle('hidden');
-        });
-
-        sidebarOverlay.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
-        });
+        // Initialize page-specific data
+        async function initializePageData() {
+            loadCategories();
+            loadProducts();
+        }
 
         // Modal functionality
         const addProductBtn = document.getElementById('addProductBtn');
@@ -321,6 +243,7 @@ $sellerInfo = $auth->getCurrentSeller();
                 const params = new URLSearchParams({
                     limit: 20,
                     offset: (page - 1) * 20,
+                    _t: Date.now(), // Cache busting
                     ...filters
                 });
                 
@@ -396,7 +319,10 @@ $sellerInfo = $auth->getCurrentSeller();
                 if (data.success) {
                     productModal.classList.add('hidden');
                     showAlert('Product updated successfully', 'success');
-                    loadProducts(currentPage, currentFilters);
+                    
+                    // Force refresh the products list to show updated data
+                    await loadProducts(currentPage, currentFilters);
+                    
                     delete document.getElementById('productForm').dataset.productId;
                 } else {
                     showAlert('Error updating product: ' + data.message, 'error');
@@ -431,8 +357,8 @@ $sellerInfo = $auth->getCurrentSeller();
                     </td>
                     <td class="px-6 py-4 text-gray-700">${product.category_name || 'Uncategorized'}</td>
                     <td class="px-6 py-4">
-                        <div class="font-semibold text-gray-900">$${parseFloat(product.price).toFixed(2)}</div>
-                        ${product.compare_price ? `<div class="text-sm text-gray-500 line-through">$${parseFloat(product.compare_price).toFixed(2)}</div>` : ''}
+                        <div class="font-semibold text-gray-900">₱${parseFloat(product.price).toFixed(2)}</div>
+                        ${product.compare_price ? `<div class="text-sm text-gray-500 line-through">₱${parseFloat(product.compare_price).toFixed(2)}</div>` : ''}
                     </td>
                     <td class="px-6 py-4">
                         <div class="font-medium text-gray-900">${product.stock_quantity}</div>
@@ -486,17 +412,25 @@ $sellerInfo = $auth->getCurrentSeller();
 
         // Utility functions
         function getStatusClass(status, stock) {
-            if (status === 'active' && stock > 0) return 'bg-green-100 text-green-800';
-            if (status === 'active' && stock <= 5) return 'bg-yellow-100 text-yellow-800';
-            if (stock === 0) return 'bg-red-100 text-red-800';
+            const numericStock = parseInt(stock) || 0;
+            const productStatus = status || 'draft';
+            
+            if (numericStock === 0) return 'bg-red-100 text-red-800';
+            if (numericStock <= 5 && productStatus === 'published') return 'bg-yellow-100 text-yellow-800';
+            if (productStatus === 'published' && numericStock > 5) return 'bg-green-100 text-green-800';
+            if (productStatus === 'draft') return 'bg-blue-100 text-blue-800';
             return 'bg-gray-100 text-gray-800';
         }
 
         function getStatusText(status, stock) {
-            if (stock === 0) return 'Out of Stock';
-            if (stock <= 5) return 'Low Stock';
-            if (status === 'active') return 'Active';
-            return status.charAt(0).toUpperCase() + status.slice(1);
+            const numericStock = parseInt(stock) || 0;
+            const productStatus = status || 'draft';
+            
+            if (numericStock === 0) return 'Out of Stock';
+            if (numericStock <= 5 && productStatus === 'published') return 'Low Stock';
+            if (productStatus === 'published') return 'Published';
+            if (productStatus === 'draft') return 'Draft';
+            return productStatus.charAt(0).toUpperCase() + productStatus.slice(1);
         }
 
         function showAlert(message, type = 'info') {
@@ -507,9 +441,169 @@ $sellerInfo = $auth->getCurrentSeller();
             setTimeout(() => alert.remove(), 3000);
         }
 
+        // Product details modal functionality
+        const productDetailsModal = document.getElementById('productDetailsModal');
+        const closeDetailsModal = document.getElementById('closeDetailsModal');
+
+        closeDetailsModal.addEventListener('click', () => {
+            productDetailsModal.classList.add('hidden');
+        });
+
+        productDetailsModal.addEventListener('click', (e) => {
+            if (e.target === productDetailsModal) {
+                productDetailsModal.classList.add('hidden');
+            }
+        });
+
         // Product actions
-        function viewProduct(id) {
-            window.open(`api/products/detail.php?id=${id}`, '_blank');
+        async function viewProduct(id) {
+            try {
+                const response = await fetch(`api/products/detail.php?id=${id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const product = data.product;
+                    const detailsContent = document.getElementById('productDetailsContent');
+                    
+                    detailsContent.innerHTML = `
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Product Images -->
+                            <div>
+                                <div class="mb-4">
+                                    <img src="${product.primary_image || 'https://via.placeholder.com/400'}" 
+                                         alt="${product.name}" 
+                                         class="main-product-image w-full h-80 object-cover rounded-lg border"
+                                         onerror="this.src='https://via.placeholder.com/400'">
+                                </div>
+                                ${product.images && product.images.length > 0 ? `
+                                    <div class="grid grid-cols-4 gap-2">
+                                        ${product.images.map(img => `
+                                            <img src="${img.image_url}" 
+                                                 alt="${img.alt_text || product.name}"
+                                                 class="w-full h-20 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                 onclick="document.querySelector('.main-product-image').src='${img.image_url}'"
+                                                 onerror="this.src='https://via.placeholder.com/80'">
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <!-- Product Information -->
+                            <div class="space-y-6">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-900 mb-2">${product.name}</h2>
+                                    <p class="text-gray-600 mb-4">${product.short_description || 'No short description available'}</p>
+                                    
+                                    <!-- Status Badge -->
+                                    <div class="mb-4">
+                                        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusClass(product.status, product.stock_quantity)}">
+                                            ${getStatusText(product.status, product.stock_quantity)}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Product Details Grid -->
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="font-medium text-gray-700">SKU:</span>
+                                        <span class="text-gray-600">${product.sku || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700">Category:</span>
+                                        <span class="text-gray-600">${product.category_name || 'Uncategorized'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700">Price:</span>
+                                        <span class="text-gray-900 font-semibold">₱${parseFloat(product.price).toFixed(2)}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700">Compare Price:</span>
+                                        <span class="text-gray-600">${product.compare_price ? '₱' + parseFloat(product.compare_price).toFixed(2) : 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700">Stock:</span>
+                                        <span class="text-gray-600">${product.stock_quantity} units</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700">Weight:</span>
+                                        <span class="text-gray-600">${product.weight || 'N/A'}</span>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <span class="font-medium text-gray-700">Dimensions:</span>
+                                        <span class="text-gray-600">${product.dimensions || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700">Created:</span>
+                                        <span class="text-gray-600">${new Date(product.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700">Updated:</span>
+                                        <span class="text-gray-600">${new Date(product.updated_at).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="flex space-x-3 pt-4 border-t">
+                                    <button onclick="editProduct(${product.id}); productDetailsModal.classList.add('hidden');" 
+                                            class="btn-beige">
+                                        <i class="fas fa-edit mr-2"></i>Edit Product
+                                    </button>
+                                    <button onclick="deleteProduct(${product.id}); productDetailsModal.classList.add('hidden');" 
+                                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                                        <i class="fas fa-trash mr-2"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Full Description -->
+                        ${product.description ? `
+                            <div class="mt-8 pt-6 border-t">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+                                <div class="text-gray-700 prose max-w-none">
+                                    ${product.description.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Product Variants -->
+                        ${product.variants && product.variants.length > 0 ? `
+                            <div class="mt-8 pt-6 border-t">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-3">Product Variants</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left">Variant</th>
+                                                <th class="px-4 py-2 text-left">SKU</th>
+                                                <th class="px-4 py-2 text-left">Price</th>
+                                                <th class="px-4 py-2 text-left">Stock</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            ${product.variants.map(variant => `
+                                                <tr>
+                                                    <td class="px-4 py-2">${variant.variant_name}</td>
+                                                    <td class="px-4 py-2">${variant.sku || 'N/A'}</td>
+                                                    <td class="px-4 py-2">${variant.price ? '₱' + parseFloat(variant.price).toFixed(2) : 'N/A'}</td>
+                                                    <td class="px-4 py-2">${variant.stock_quantity}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    productDetailsModal.classList.remove('hidden');
+                } else {
+                    showAlert('Error loading product details: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error loading product details', 'error');
+            }
         }
 
         async function editProduct(id) {
@@ -575,6 +669,11 @@ $sellerInfo = $auth->getCurrentSeller();
             if (productData.compare_price) productData.compare_price = parseFloat(productData.compare_price);
             if (productData.stock_quantity) productData.stock_quantity = parseInt(productData.stock_quantity);
             if (productData.category_id) productData.category_id = parseInt(productData.category_id);
+            
+            // Ensure status is included - only set default if undefined or empty string
+            if (!productData.status || productData.status === '') {
+                productData.status = 'draft'; // Default value if not set
+            }
             
             // Add images if any uploaded
             if (uploadedImages.length > 0) {
@@ -729,11 +828,6 @@ $sellerInfo = $auth->getCurrentSeller();
             document.getElementById('imagesInput').value = JSON.stringify(uploadedImages);
         }
         
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            loadCategories();
-            loadProducts();
-        });
     </script>
-</body>
-</html>
+
+<?php include 'includes/footer.php'; ?>
