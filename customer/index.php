@@ -28,9 +28,9 @@
 
 
     <nav class="navbar">
-        <a href=index.html>home</a>
+        <a href=index.php>home</a>
         <a href="#about">about</a>
-        <a href=products.html>products</a>
+        <a href=products.php>products</a>
         <a href="#review">review</a>
         <a href="#contact">contact</a>
     </nav>
@@ -51,10 +51,10 @@
 <section class="home" id="home">
 
     <div class="content">
-        <h3>Online</h3>
-        <span> Shopping</span>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque, quod similique! At provident illo earum recusandae quae. Vel atque nobis porro ut omnis consequatur veniam! Libero totam accusantium cupiditate consequuntur!</p>
-        <a href="products.html" class="btn">shop now</a>
+        <h3>Shop Smart</h3>
+        <span> Shop Online</span>
+        <p>Discover amazing products at unbeatable prices. From electronics to fashion, home goods to sports equipment - find everything you need in one convenient place with fast shipping and secure payments.</p>
+        <a href="products.php" class="btn">shop now</a>
     </div>
 
 
@@ -72,13 +72,13 @@
 
         <div class="video-container">
             <video src="images/about-vid.mp4" loop autoplay muted></video>
-            <h3>Best flower sellers</h3>
+            <h3>Best online shopping experience</h3>
         </div>
 
         <div class="content">
             <h3>why choose us?</h3>
-            <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Officiis, dignissimos facilis dicta rem qui odit numquam harum culpa, aspernatur natus voluptas debitis esse porro asperiores modi eaque aperiam dolores ut.</p>
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugit nulla perspiciatis earum ad corrupti eos consequuntur reprehenderit voluptatibus, laborum delectus! Iure velit veritatis quam eaque! Voluptates quod sequi neque delectus.</p>
+            <p>We offer a vast selection of quality products from trusted brands at competitive prices. Our user-friendly platform makes shopping easy and secure with multiple payment options and reliable customer support.</p>
+            <p>With fast shipping, hassle-free returns, and 24/7 customer service, we're committed to providing you with the best online shopping experience. Join millions of satisfied customers who trust us for their shopping needs.</p>
             <a href="#" class="btn">Learn More</a>
         </div>
 
@@ -275,7 +275,7 @@
     </div>
 </div>
 
-<div class="credit"> Created By <span> Lumino Core 1</span> | All rights reserved</div>
+<div class="credit"> Created By <span> ShopZone Team</span> | All rights reserved</div>
 
 </section>
 
