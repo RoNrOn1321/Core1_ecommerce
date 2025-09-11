@@ -46,7 +46,7 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
             <div class="flex items-center space-x-2">
                 <img class="h-10 w-10 object-contain" src="<?php echo $basePath; ?>images/logo1.png" alt="Logo">
                 <a href="<?php echo $basePath; ?>index.php" class="text-2xl font-bold text-gray-900">
-                    Core1<span class="text-amber-600">.</span>
+                    Lumino<span class="text-amber-600">.</span>
                 </a>
             </div>
 
