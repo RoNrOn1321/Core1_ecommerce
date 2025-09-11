@@ -25,7 +25,7 @@
 <section class="home" id="home">
 
     <div class="content">
-        <h3>Shop Smart</h3>
+        <h3>Lumino</h3>
         <span> Shop Online</span>
         <p>Discover amazing products at unbeatable prices. From electronics to fashion, home goods to sports equipment - find everything you need in one convenient place with fast shipping and secure payments.</p>
         <a href="products.php" class="btn">shop now</a>

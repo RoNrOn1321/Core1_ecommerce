@@ -44,6 +44,8 @@ try {
                     'GET /auth/me' => 'Get current customer info',
                     'GET /products' => 'Get products list',
                     'GET /products/{id}' => 'Get single product',
+                    'GET /sellers' => 'Get sellers list',
+                    'GET /sellers/{id}' => 'Get single seller',
                     'POST /cart/add' => 'Add item to cart',
                     'GET /cart' => 'Get cart contents',
                     'PUT /cart/{id}' => 'Update cart item',
@@ -68,6 +70,10 @@ try {
             
         case 'cart':
             require_once 'cart.php';
+            break;
+            
+        case 'sellers':
+            require_once 'sellers.php';
             break;
             
         case 'orders':

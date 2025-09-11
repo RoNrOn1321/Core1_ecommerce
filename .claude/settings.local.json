@@ -32,7 +32,14 @@
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SHOW TABLES LIKE ''%cart%'';\")",
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; DESCRIBE cart_items;\")",
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT COUNT(*) as user_count FROM users;\")",
-      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT id, first_name, email FROM users LIMIT 1;\")"
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT id, first_name, email FROM users LIMIT 1;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT id, name, description, price, seller_id FROM products LIMIT 3;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT id, store_name, business_name FROM sellers LIMIT 3;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT p.id, p.name, p.price, p.seller_id, s.store_name FROM products p LEFT JOIN sellers s ON p.seller_id = s.id LIMIT 3;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT id, store_name, status FROM sellers LIMIT 3;\")",
+      "Bash(del test_api.php)",
+      "Bash(findstr:*)",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT COUNT(*) as seller_count FROM sellers;\")"
     ],
     "deny": [],
     "ask": []

@@ -23,7 +23,7 @@ function isActive($page, $currentPage, $currentDir = '') {
 
 // Base path for links (adjust based on current directory)
 $basePath = '';
-if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === 'cart' || $currentDir === 'support') {
+if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === 'cart' || $currentDir === 'support' || $currentDir === 'sellers') {
     $basePath = '../';
 }
 ?>

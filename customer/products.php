@@ -419,7 +419,10 @@
 
     function getProductImage(images) {
         if (images && images.length > 0) {
-            const imageUrl = images[0];
+            // Handle both string and object image formats
+            const imageUrl = typeof images[0] === 'string' ? images[0] : images[0].image_url || images[0];
+            if (!imageUrl) return '../images/no-image.png';
+            
             // Check if it's already a full URL
             if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) {
                 return imageUrl;
