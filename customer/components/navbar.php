@@ -278,13 +278,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize profile image
     loadNavProfileImage();
+    
+    // Listen for profile image updates from other components
+    window.addEventListener('profileImageUpdated', function(event) {
+        updateNavProfileImage(event.detail.imageUrl);
+    });
 });
 
 // Load profile image in navbar
 async function loadNavProfileImage() {
     try {
         const response = await customerAPI.auth.getProfile();
-        if (response.success && response.customer && response.customer.profile_image) {
+        if (response.success && response.customer) {
             updateNavProfileImage(response.customer.profile_image);
         }
     } catch (error) {
@@ -292,17 +297,50 @@ async function loadNavProfileImage() {
     }
 }
 
+// Function to immediately refresh profile image from server
+window.refreshProfileImage = async function() {
+    try {
+        const response = await customerAPI.auth.getProfile();
+        if (response.success && response.customer) {
+            window.updateGlobalProfileImage(response.customer.profile_image);
+        }
+    } catch (error) {
+        console.error('Failed to refresh profile image:', error);
+    }
+};
+
 // Update navbar profile image
 function updateNavProfileImage(imageUrl) {
     const navProfileImage = document.getElementById('navProfileImage');
     const navProfilePlaceholder = document.getElementById('navProfilePlaceholder');
     
-    if (imageUrl && navProfileImage && navProfilePlaceholder) {
-        navProfileImage.src = imageUrl;
-        navProfileImage.style.display = 'block';
-        navProfilePlaceholder.style.display = 'none';
+    if (navProfileImage && navProfilePlaceholder) {
+        if (imageUrl) {
+            navProfileImage.src = imageUrl;
+            navProfileImage.style.display = 'block';
+            navProfilePlaceholder.style.display = 'none';
+        } else {
+            navProfileImage.style.display = 'none';
+            navProfilePlaceholder.style.display = 'flex';
+        }
     }
 }
+
+// Global function to update profile image across all components
+window.updateGlobalProfileImage = function(imageUrl) {
+    // Update navbar
+    updateNavProfileImage(imageUrl);
+    
+    // Update profile page if present
+    if (typeof updateProfileImageDisplay === 'function') {
+        updateProfileImageDisplay(imageUrl);
+    }
+    
+    // Trigger custom event for other components that might need to listen
+    window.dispatchEvent(new CustomEvent('profileImageUpdated', { 
+        detail: { imageUrl: imageUrl }
+    }));
+};
 
 // Helper function to get correct image URL
 function getCartItemImage(imageUrl) {

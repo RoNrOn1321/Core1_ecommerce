@@ -839,7 +839,20 @@ async function uploadProfileImage() {
         if (result.success) {
             showToast('Profile image updated successfully', 'success');
             originalPersonalData.profile_image = result.data.image_url;
+            
+            // Update all profile images globally (navbar + profile page)
             updateProfileImageDisplay(result.data.image_url);
+            
+            // Also update navbar if global function is available
+            if (typeof window.updateGlobalProfileImage === 'function') {
+                window.updateGlobalProfileImage(result.data.image_url);
+            }
+            
+            // Fallback: trigger custom event for navbar
+            window.dispatchEvent(new CustomEvent('profileImageUpdated', { 
+                detail: { imageUrl: result.data.image_url }
+            }));
+            
             closeImageUploadModal();
         } else {
             showToast(result.message || 'Failed to upload image', 'error');
@@ -872,7 +885,20 @@ async function deleteProfileImage() {
         if (result.success) {
             showToast('Profile image removed successfully', 'success');
             originalPersonalData.profile_image = null;
+            
+            // Update all profile images globally (navbar + profile page)
             updateProfileImageDisplay(null);
+            
+            // Also update navbar if global function is available
+            if (typeof window.updateGlobalProfileImage === 'function') {
+                window.updateGlobalProfileImage(null);
+            }
+            
+            // Fallback: trigger custom event for navbar
+            window.dispatchEvent(new CustomEvent('profileImageUpdated', { 
+                detail: { imageUrl: null }
+            }));
+            
             closeImageUploadModal();
         } else {
             showToast(result.message || 'Failed to remove image', 'error');
