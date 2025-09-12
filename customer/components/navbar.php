@@ -76,6 +76,40 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
 
             <!-- Right side icons -->
             <div class="flex items-center space-x-4">
+                <!-- Support Notifications (only show when logged in) -->
+                <?php if ($isLoggedIn): ?>
+                <div class="relative">
+                    <button id="notificationIcon" class="p-2 rounded-full text-gray-600 hover:text-blue-500 hover:bg-blue-50 transition-all relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="notificationCount" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" style="display: none;">0</span>
+                    </button>
+
+                    <!-- Notifications Dropdown -->
+                    <div id="notificationDropdown" class="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible transition-all transform translate-y-2 z-50">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-lg text-gray-900">Support Updates</h3>
+                                <button id="markAllReadBtn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                    Mark All Read
+                                </button>
+                            </div>
+                            <div id="notificationsList" class="max-h-64 overflow-y-auto mb-4">
+                                <!-- Notifications will be loaded here -->
+                                <div id="notificationsLoading" class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-500">Loading notifications...</p>
+                                </div>
+                            </div>
+                            <div class="border-t pt-4">
+                                <a href="<?php echo $basePath; ?>support/my-tickets.php" class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                    <i class="fas fa-list mr-2"></i> View All Tickets
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <!-- Wishlist -->
                 <a href="<?php echo $basePath; ?>wishlist.php" class="p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-red-50 transition-all relative">
                     <i class="fas fa-heart text-xl"></i>
@@ -262,6 +296,27 @@ document.addEventListener('DOMContentLoaded', function() {
         miniCart.classList.remove('opacity-100', 'visible', 'translate-y-0');
     });
 
+    // Notification dropdown toggle
+    const notificationIcon = document.getElementById('notificationIcon');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+
+    notificationIcon?.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (notificationDropdown.classList.contains('opacity-0')) {
+            notificationDropdown.classList.remove('opacity-0', 'invisible', 'translate-y-2');
+            notificationDropdown.classList.add('opacity-100', 'visible', 'translate-y-0');
+            loadNotifications();
+        } else {
+            notificationDropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+            notificationDropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
+        }
+    });
+
+    markAllReadBtn?.addEventListener('click', function() {
+        markAllNotificationsAsRead();
+    });
+
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
         if (!userMenuToggle?.contains(e.target) && !userDropdown?.contains(e.target)) {
@@ -273,6 +328,11 @@ document.addEventListener('DOMContentLoaded', function() {
             miniCart?.classList.add('opacity-0', 'invisible', 'translate-y-2');
             miniCart?.classList.remove('opacity-100', 'visible', 'translate-y-0');
         }
+
+        if (!notificationIcon?.contains(e.target) && !notificationDropdown?.contains(e.target)) {
+            notificationDropdown?.classList.add('opacity-0', 'invisible', 'translate-y-2');
+            notificationDropdown?.classList.remove('opacity-100', 'visible', 'translate-y-0');
+        }
     });
 
     // Initialize cart count
@@ -283,6 +343,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize profile image
     loadNavProfileImage();
+    
+    // Initialize notifications
+    updateNotificationCount();
+    
+    // Start notification polling if logged in
+    <?php if ($isLoggedIn): ?>
+        startNotificationPolling();
+    <?php endif; ?>
     
     // Listen for profile image updates from other components
     window.addEventListener('profileImageUpdated', function(event) {
@@ -534,5 +602,166 @@ function showToast(message, type = 'success') {
             toast.style.display = 'none';
         }, 300);
     }, 3000);
+}
+
+// Notification functions
+let notificationPollingInterval;
+
+async function updateNotificationCount() {
+    try {
+        if (typeof customerAPI === 'undefined') {
+            console.warn('customerAPI not loaded yet, retrying...');
+            setTimeout(updateNotificationCount, 100);
+            return;
+        }
+        
+        const response = await customerAPI.support.getUnreadNotifications();
+        if (response.success && response.data) {
+            const count = response.data.total_unread_messages || 0;
+            const notificationCount = document.getElementById('notificationCount');
+            
+            if (notificationCount) {
+                if (count > 0) {
+                    notificationCount.textContent = count > 99 ? '99+' : count;
+                    notificationCount.style.display = 'flex';
+                } else {
+                    notificationCount.style.display = 'none';
+                }
+            }
+        }
+    } catch (error) {
+        // Silently fail - user may not be logged in
+        console.debug('Notification count update failed:', error.message);
+    }
+}
+
+async function loadNotifications() {
+    const notificationsLoading = document.getElementById('notificationsLoading');
+    const notificationsList = document.getElementById('notificationsList');
+    
+    if (!notificationsList) return;
+    
+    notificationsLoading.style.display = 'block';
+    
+    try {
+        const response = await customerAPI.support.getUnreadNotifications();
+        if (response.success && response.data) {
+            renderNotifications(response.data.tickets);
+        } else {
+            notificationsList.innerHTML = '<div class="text-center py-4 text-gray-500">No new notifications</div>';
+        }
+    } catch (error) {
+        console.error('Failed to load notifications:', error);
+        notificationsList.innerHTML = '<div class="text-center py-4 text-red-500">Failed to load notifications</div>';
+    } finally {
+        notificationsLoading.style.display = 'none';
+    }
+}
+
+function renderNotifications(notifications) {
+    const notificationsList = document.getElementById('notificationsList');
+    
+    if (!notifications || notifications.length === 0) {
+        notificationsList.innerHTML = '<div class="text-center py-4 text-gray-500">No new notifications</div>';
+        return;
+    }
+
+    const notificationsHTML = notifications.map(notification => {
+        const statusClass = getNotificationStatusClass(notification.status);
+        const priorityClass = getNotificationPriorityClass(notification.priority);
+        const timeAgo = getTimeAgo(notification.last_reply_at);
+        
+        return `
+            <div class="border-b border-gray-100 last:border-b-0 py-3">
+                <a href="<?php echo $basePath; ?>support/ticket-detail.php?id=${notification.ticket_id}" class="block hover:bg-gray-50 -m-2 p-2 rounded">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <p class="text-sm font-medium text-gray-900 truncate">#${notification.ticket_number}</p>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${notification.status.replace('_', ' ')}</span>
+                            </div>
+                            <p class="text-sm text-gray-900 font-medium mb-1 line-clamp-2">${notification.subject}</p>
+                            ${notification.preview ? `<p class="text-xs text-gray-600 line-clamp-2">${notification.preview}</p>` : ''}
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-xs text-gray-500">${timeAgo}</span>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${priorityClass}">${notification.priority}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        `;
+    }).join('');
+
+    notificationsList.innerHTML = notificationsHTML;
+}
+
+async function markAllNotificationsAsRead() {
+    try {
+        const response = await customerAPI.post('/support/notifications/mark-read');
+        if (response.success) {
+            showToast('All notifications marked as read', 'success');
+            updateNotificationCount();
+            loadNotifications();
+            
+            // Close dropdown
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            notificationDropdown?.classList.add('opacity-0', 'invisible', 'translate-y-2');
+            notificationDropdown?.classList.remove('opacity-100', 'visible', 'translate-y-0');
+        }
+    } catch (error) {
+        console.error('Failed to mark notifications as read:', error);
+        showToast('Failed to mark notifications as read', 'error');
+    }
+}
+
+function startNotificationPolling() {
+    // Update immediately
+    updateNotificationCount();
+    
+    // Then update every 30 seconds
+    notificationPollingInterval = setInterval(updateNotificationCount, 30000);
+}
+
+function stopNotificationPolling() {
+    if (notificationPollingInterval) {
+        clearInterval(notificationPollingInterval);
+    }
+}
+
+function getNotificationStatusClass(status) {
+    const statusClasses = {
+        'open': 'bg-red-100 text-red-800',
+        'in_progress': 'bg-yellow-100 text-yellow-800',
+        'waiting_customer': 'bg-blue-100 text-blue-800',
+        'resolved': 'bg-green-100 text-green-800',
+        'closed': 'bg-gray-100 text-gray-800'
+    };
+    return statusClasses[status] || 'bg-gray-100 text-gray-800';
+}
+
+function getNotificationPriorityClass(priority) {
+    const priorityClasses = {
+        'urgent': 'bg-red-100 text-red-800',
+        'high': 'bg-orange-100 text-orange-800',
+        'medium': 'bg-yellow-100 text-yellow-800',
+        'low': 'bg-green-100 text-green-800'
+    };
+    return priorityClasses[priority] || 'bg-gray-100 text-gray-800';
+}
+
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return date.toLocaleDateString();
 }
 </script>

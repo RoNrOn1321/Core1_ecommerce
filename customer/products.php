@@ -306,43 +306,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <div class="flex justify-center items-center gap-2 mt-8" id="pagination"></div>
 </section>
 
-<!-- footer section starts -->
-<section class="footer">
-    <div class="box-container">
-        <div class="box">
-            <h3>quick links</h3>
-            <a href="index.php">home</a>
-            <a href="index.php#about">about</a>
-            <a href="products.php">products</a>
-            <a href="index.php#contact">contact</a>
-        </div>
-
-        <div class="box">
-            <h3>account</h3>
-            <a href="account/dashboard.php">my account</a>
-            <a href="account/orders.php">my orders</a>
-            <a href="wishlist.php">my wishlist</a>
-            <a href="cart.php">my cart</a>
-        </div>
-
-        <div class="box">
-            <h3>support</h3>
-            <a href="support/index.php">help center</a>
-            <a href="support/chat.php">live chat</a>
-            <a href="support/tickets.php">support tickets</a>
-            <a href="#faq">faq</a>
-        </div>
-
-        <div class="box">
-            <h3>contact info</h3>
-            <a href="#"><i class="fas fa-phone"></i> +639-123-45678</a>
-            <a href="#"><i class="fas fa-envelope"></i> support@luminoecommerce.com</a>
-            <a href="#"><i class="fas fa-map-marker-alt"></i> manila, philippines</a>
-        </div>
-    </div>
-
-    <div class="credit">created by <span>lumino team</span> | all rights reserved</div>
-</section>
+<?php include 'components/footer.php'; ?>
 
 <script src="assets/js/customer-api.js"></script>
 <script>

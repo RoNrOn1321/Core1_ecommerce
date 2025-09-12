@@ -225,7 +225,10 @@
     </div>
 </section>
 
-<?php include '../components/footer.php'; ?>
+<?php 
+$base_path = '../';
+include '../components/footer.php'; 
+?>
 
 <script>
 let currentTicket = null;
@@ -244,6 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     checkAuthenticationAndLoadTicket();
     setupEventListeners();
+    startRealTimeUpdates();
 });
 
 async function checkAuthenticationAndLoadTicket() {
@@ -339,22 +343,20 @@ async function loadTicketMessages() {
     document.getElementById('messagesList').innerHTML = '';
     
     try {
-        // In a real implementation, you would have an API endpoint to get ticket messages
-        // For now, we'll simulate with a simple structure
-        const messages = [
-            {
-                id: 1,
-                sender_type: 'customer',
-                sender_name: 'You',
-                message: currentTicket.description,
-                created_at: currentTicket.created_at,
-                attachments: []
-            }
-            // Additional messages would be loaded from the API
-        ];
+        const response = await customerAPI.support.getTicketMessages(ticketId);
         
-        renderMessages(messages);
-        document.getElementById('messagesLoading').style.display = 'none';
+        if (response.success && response.data) {
+            renderMessages(response.data.messages);
+            document.getElementById('messagesLoading').style.display = 'none';
+            
+            // Initialize lastMessageCount for real-time updates
+            lastMessageCount = response.data.messages.length;
+            
+            // Mark this ticket as viewed to update notifications
+            await markTicketAsViewed(ticketId);
+        } else {
+            throw new Error(response.message || 'Failed to load messages');
+        }
         
     } catch (error) {
         console.error('Failed to load messages:', error);
@@ -363,6 +365,9 @@ async function loadTicketMessages() {
             <div class="p-6 text-center text-red-600">
                 <i class="fas fa-exclamation-triangle mb-2"></i>
                 <p>Failed to load conversation</p>
+                <button onclick="loadTicketMessages()" class="mt-2 text-blue-600 hover:text-blue-800 font-medium">
+                    <i class="fas fa-sync mr-1"></i>Try Again
+                </button>
             </div>
         `;
     }
@@ -451,23 +456,31 @@ async function handleReplySubmit(e) {
     sendBtn.disabled = true;
     
     try {
-        // In a real implementation, this would send the reply via API
-        // For now, we'll simulate the process
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+        const response = await customerAPI.support.sendReply(ticketId, replyMessage);
         
-        showToast('Reply sent successfully!', 'success');
-        
-        // Clear form
-        document.getElementById('replyMessage').value = '';
-        selectedAttachments = [];
-        renderAttachmentsList();
-        
-        // Reload messages
-        await loadTicketMessages();
+        if (response.success) {
+            showToast('Reply sent successfully!', 'success');
+            
+            // Clear form
+            document.getElementById('replyMessage').value = '';
+            selectedAttachments = [];
+            renderAttachmentsList();
+            
+            // Reload messages to show the new reply
+            await loadTicketMessages();
+            
+            // Update ticket details if status changed
+            if (response.data && response.data.ticket_status) {
+                await loadTicketDetails();
+            }
+            
+        } else {
+            throw new Error(response.message || 'Failed to send reply');
+        }
         
     } catch (error) {
         console.error('Failed to send reply:', error);
-        showToast('Failed to send reply. Please try again.', 'error');
+        showToast(error.message || 'Failed to send reply. Please try again.', 'error');
     } finally {
         sendBtn.innerHTML = originalText;
         sendBtn.disabled = false;
@@ -635,6 +648,90 @@ function showToast(message, type = 'success') {
         toast.remove();
     }, 3000);
 }
+
+// Real-time updates
+let pollingInterval;
+let lastMessageCount = 0;
+
+function startRealTimeUpdates() {
+    // Poll every 10 seconds for new messages
+    pollingInterval = setInterval(async () => {
+        if (ticketId && currentTicket && currentTicket.status !== 'closed') {
+            await checkForNewMessages();
+        }
+    }, 10000);
+}
+
+function stopRealTimeUpdates() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+}
+
+async function checkForNewMessages() {
+    try {
+        const response = await customerAPI.support.getTicketMessages(ticketId);
+        
+        if (response.success && response.data) {
+            const messages = response.data.messages;
+            const currentMessageCount = messages.length;
+            
+            // If there are new messages, reload the conversation
+            if (currentMessageCount > lastMessageCount) {
+                renderMessages(messages);
+                
+                // Show notification for new agent replies
+                const newMessages = messages.slice(lastMessageCount);
+                const agentReplies = newMessages.filter(msg => msg.sender_type === 'agent');
+                
+                if (agentReplies.length > 0) {
+                    showToast(`You received ${agentReplies.length} new ${agentReplies.length === 1 ? 'reply' : 'replies'} from support!`, 'info');
+                    
+                    // Play a subtle notification sound (optional)
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('Support Reply Received', {
+                            body: `New reply on ticket #${currentTicket.ticket_number}`,
+                            icon: '/Core1_ecommerce/customer/images/logo1.png'
+                        });
+                    }
+                }
+            }
+            
+            lastMessageCount = currentMessageCount;
+        }
+    } catch (error) {
+        console.debug('Failed to check for new messages:', error);
+    }
+}
+
+async function markTicketAsViewed(ticketId) {
+    try {
+        // Update the customer_last_seen timestamp
+        await customerAPI.post('/support/notifications/mark-read');
+        
+        // Update notification count in navbar
+        if (typeof updateNotificationCount === 'function') {
+            updateNotificationCount();
+        }
+    } catch (error) {
+        console.debug('Failed to mark ticket as viewed:', error);
+    }
+}
+
+// Request notification permission when page loads
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+// Stop polling when user leaves the page
+window.addEventListener('beforeunload', stopRealTimeUpdates);
+window.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopRealTimeUpdates();
+    } else if (ticketId && currentTicket && currentTicket.status !== 'closed') {
+        startRealTimeUpdates();
+    }
+});
 </script>
 
 </body>

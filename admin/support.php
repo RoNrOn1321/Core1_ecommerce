@@ -112,13 +112,13 @@ try {
     $analytics_stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_tickets,
-            SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAYS) THEN 1 ELSE 0 END) as tickets_last_7_days,
-            SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 ELSE 0 END) as tickets_today,
+            SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as tickets_last_7_days,
+            SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) as tickets_today,
             AVG(CASE WHEN resolved_at IS NOT NULL THEN TIMESTAMPDIFF(HOUR, created_at, resolved_at) END) as avg_resolution_time_hours,
             SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_tickets,
             SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open_tickets,
             SUM(CASE WHEN priority = 'urgent' AND status IN ('open', 'in_progress') THEN 1 ELSE 0 END) as urgent_tickets,
-            SUM(CASE WHEN updated_at < DATE_SUB(NOW(), INTERVAL 24 HOUR) AND status IN ('open', 'in_progress') THEN 1 ELSE 0 END) as stale_tickets
+            SUM(CASE WHEN updated_at < DATE_SUB(NOW(), INTERVAL 1 DAY) AND status IN ('open', 'in_progress') THEN 1 ELSE 0 END) as stale_tickets
         FROM support_tickets
     ");
     $analytics = $analytics_stmt->fetch();
@@ -127,7 +127,7 @@ try {
     $category_stmt = $pdo->query("
         SELECT category, COUNT(*) as count 
         FROM support_tickets 
-        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAYS)
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         GROUP BY category 
         ORDER BY count DESC
     ");
@@ -140,7 +140,7 @@ try {
             COUNT(*) as total,
             AVG(CASE WHEN resolved_at IS NOT NULL THEN TIMESTAMPDIFF(HOUR, created_at, resolved_at) END) as avg_resolution_time
         FROM support_tickets 
-        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAYS)
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         GROUP BY priority
     ");
     $priority_data = $priority_stmt->fetchAll();

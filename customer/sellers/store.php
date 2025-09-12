@@ -273,7 +273,10 @@
 </div>
 
 <!-- Footer -->
-<?php include '../components/footer.php'; ?>
+<?php 
+$base_path = '../';
+include '../components/footer.php'; 
+?>
 
 <script src="../assets/js/customer-api.js"></script>
 <script>

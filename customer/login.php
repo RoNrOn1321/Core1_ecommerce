@@ -170,5 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<?php include 'components/footer.php'; ?>
+
 </body>
 </html>

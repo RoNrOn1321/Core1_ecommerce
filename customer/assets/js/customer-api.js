@@ -249,6 +249,18 @@ const customerAPI = {
 
         async getTicket(id) {
             return customerAPI.get(`/support/tickets/${id}`);
+        },
+
+        async getTicketMessages(ticketId) {
+            return customerAPI.get(`/support/messages/${ticketId}`);
+        },
+
+        async sendReply(ticketId, message) {
+            return customerAPI.post(`/support/messages/${ticketId}`, { message });
+        },
+
+        async getUnreadNotifications() {
+            return customerAPI.get('/support/notifications/unread');
         }
     },
 

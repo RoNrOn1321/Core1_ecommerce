@@ -182,7 +182,10 @@
     </div>
 </section>
 
-<?php include '../components/footer.php'; ?>
+<?php 
+$base_path = '../';
+include '../components/footer.php'; 
+?>
 
 <script>
 let allTickets = [];

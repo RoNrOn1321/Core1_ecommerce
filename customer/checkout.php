@@ -831,5 +831,7 @@ function showToast(message, type = 'success') {
 }
 </script>
 
+<?php include 'components/footer.php'; ?>
+
 </body>
 </html>

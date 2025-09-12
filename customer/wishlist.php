@@ -593,5 +593,7 @@ if (!isset($_SESSION['customer_id'])) {
         `;
         document.head.appendChild(style);
     </script>
+
+    <?php include 'components/footer.php'; ?>
 </body>
 </html>
