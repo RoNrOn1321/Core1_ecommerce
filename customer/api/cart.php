@@ -2,7 +2,7 @@
 // Customer Cart API
 
 // Headers are set in index.php
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Start session for cart functionality
 if (session_status() === PHP_SESSION_NONE) {

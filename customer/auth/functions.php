@@ -1,7 +1,7 @@
 <?php
 // Customer authentication functions
 session_start();
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 class CustomerAuth {
     private $pdo;
@@ -13,7 +13,7 @@ class CustomerAuth {
     public function register($email, $password, $firstName, $lastName, $phone = null) {
         try {
             // Check if email already exists
-            $stmt = $this->pdo->prepare("SELECT id FROM customers WHERE email = ?");
+            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ?");
             $stmt->execute([$email]);
             if ($stmt->fetch()) {
                 return ['success' => false, 'message' => 'Email already registered'];
@@ -22,24 +22,20 @@ class CustomerAuth {
             // Hash password
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             
-            // Generate verification token
-            $verificationToken = bin2hex(random_bytes(32));
-            
             // Insert new customer
             $stmt = $this->pdo->prepare("
-                INSERT INTO customers (email, password, first_name, last_name, phone, verification_token)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO users (email, password_hash, first_name, last_name, phone, email_verified, status)
+                VALUES (?, ?, ?, ?, ?, 0, 'active')
             ");
             
-            $stmt->execute([$email, $hashedPassword, $firstName, $lastName, $phone, $verificationToken]);
+            $stmt->execute([$email, $hashedPassword, $firstName, $lastName, $phone]);
             
             $customerId = $this->pdo->lastInsertId();
             
             return [
                 'success' => true, 
-                'message' => 'Registration successful',
-                'customer_id' => $customerId,
-                'verification_token' => $verificationToken
+                'message' => 'Registration successful! Welcome to Core1 E-commerce.',
+                'customer_id' => $customerId
             ];
             
         } catch (Exception $e) {
@@ -50,14 +46,18 @@ class CustomerAuth {
     public function login($email, $password) {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT id, email, password, first_name, last_name, phone, is_verified
-                FROM customers WHERE email = ?
+                SELECT id, email, password_hash, first_name, last_name, phone, email_verified, status
+                FROM users WHERE email = ?
             ");
             $stmt->execute([$email]);
             $customer = $stmt->fetch();
             
-            if (!$customer || !password_verify($password, $customer['password'])) {
+            if (!$customer || !password_verify($password, $customer['password_hash'])) {
                 return ['success' => false, 'message' => 'Invalid email or password'];
+            }
+            
+            if ($customer['status'] !== 'active') {
+                return ['success' => false, 'message' => 'Account is suspended'];
             }
             
             // Create session
@@ -95,7 +95,7 @@ class CustomerAuth {
                     'id' => $customer['id'],
                     'email' => $customer['email'],
                     'name' => $customer['first_name'] . ' ' . $customer['last_name'],
-                    'is_verified' => $customer['is_verified']
+                    'is_verified' => $customer['email_verified']
                 ]
             ];
             
@@ -134,8 +134,8 @@ class CustomerAuth {
         
         try {
             $stmt = $this->pdo->prepare("
-                SELECT id, email, first_name, last_name, phone, is_verified, created_at
-                FROM customers WHERE id = ?
+                SELECT id, email, first_name, last_name, phone, email_verified, created_at
+                FROM users WHERE id = ?
             ");
             $stmt->execute([$_SESSION['customer_id']]);
             return $stmt->fetch();
@@ -146,83 +146,18 @@ class CustomerAuth {
     }
     
     public function verifyEmail($token) {
-        try {
-            $stmt = $this->pdo->prepare("
-                UPDATE customers 
-                SET is_verified = 1, verification_token = NULL 
-                WHERE verification_token = ?
-            ");
-            $stmt->execute([$token]);
-            
-            if ($stmt->rowCount() > 0) {
-                return ['success' => true, 'message' => 'Email verified successfully'];
-            } else {
-                return ['success' => false, 'message' => 'Invalid verification token'];
-            }
-            
-        } catch (Exception $e) {
-            return ['success' => false, 'message' => 'Verification failed: ' . $e->getMessage()];
-        }
+        // Email verification not implemented for basic auth
+        return ['success' => false, 'message' => 'Email verification not implemented'];
     }
     
     public function requestPasswordReset($email) {
-        try {
-            $stmt = $this->pdo->prepare("SELECT id FROM customers WHERE email = ?");
-            $stmt->execute([$email]);
-            $customer = $stmt->fetch();
-            
-            if (!$customer) {
-                return ['success' => false, 'message' => 'Email not found'];
-            }
-            
-            $resetToken = bin2hex(random_bytes(32));
-            $resetExpires = date('Y-m-d H:i:s', strtotime('+1 hour'));
-            
-            $stmt = $this->pdo->prepare("
-                UPDATE customers 
-                SET reset_token = ?, reset_expires = ?
-                WHERE email = ?
-            ");
-            $stmt->execute([$resetToken, $resetExpires, $email]);
-            
-            return [
-                'success' => true,
-                'message' => 'Password reset token generated',
-                'reset_token' => $resetToken
-            ];
-            
-        } catch (Exception $e) {
-            return ['success' => false, 'message' => 'Password reset request failed: ' . $e->getMessage()];
-        }
+        // Password reset not implemented for basic auth
+        return ['success' => false, 'message' => 'Password reset not implemented'];
     }
     
     public function resetPassword($token, $newPassword) {
-        try {
-            $stmt = $this->pdo->prepare("
-                SELECT id FROM customers 
-                WHERE reset_token = ? AND reset_expires > NOW()
-            ");
-            $stmt->execute([$token]);
-            $customer = $stmt->fetch();
-            
-            if (!$customer) {
-                return ['success' => false, 'message' => 'Invalid or expired reset token'];
-            }
-            
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            
-            $stmt = $this->pdo->prepare("
-                UPDATE customers 
-                SET password = ?, reset_token = NULL, reset_expires = NULL
-                WHERE id = ?
-            ");
-            $stmt->execute([$hashedPassword, $customer['id']]);
-            
-            return ['success' => true, 'message' => 'Password reset successfully'];
-            
-        } catch (Exception $e) {
-            return ['success' => false, 'message' => 'Password reset failed: ' . $e->getMessage()];
-        }
+        // Password reset not implemented for basic auth
+        return ['success' => false, 'message' => 'Password reset not implemented'];
     }
 }
 

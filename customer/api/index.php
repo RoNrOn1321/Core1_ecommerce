@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Get request information
 $requestUri = $_SERVER['REQUEST_URI'];

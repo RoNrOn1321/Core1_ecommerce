@@ -39,7 +39,10 @@
       "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT id, store_name, status FROM sellers LIMIT 3;\")",
       "Bash(del test_api.php)",
       "Bash(findstr:*)",
-      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT COUNT(*) as seller_count FROM sellers;\")"
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT COUNT(*) as seller_count FROM sellers;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\" -u root -e \"USE core1_ecommerce; SELECT COUNT(*) as product_count FROM products;\")",
+      "Bash(\"C:\\xampp\\mysql\\bin\\mysql\":*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

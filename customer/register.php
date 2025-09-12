@@ -58,9 +58,10 @@ requireGuest();
                 
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email address</label>
-                    <input id="email" name="email" type="email" autocomplete="email" required
+                    <input id="email" name="email" type="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" required
                            class="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent focus:z-10 sm:text-sm"
-                           placeholder="Enter your email address">
+                           placeholder="Enter your email address"
+                           style="text-transform: none !important;">
                 </div>
                 
                 <div>
@@ -150,6 +151,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmPasswordIcon = document.getElementById('confirmPasswordIcon');
     const passwordStrength = document.getElementById('passwordStrength');
     const passwordStrengthBar = document.getElementById('passwordStrengthBar');
+    const emailInput = document.getElementById('email');
+
+    // Force email to lowercase as user types
+    emailInput.addEventListener('input', function() {
+        const cursorPos = this.selectionStart;
+        this.value = this.value.toLowerCase();
+        this.setSelectionRange(cursorPos, cursorPos);
+    });
 
     // Toggle password visibility
     togglePassword.addEventListener('click', function() {

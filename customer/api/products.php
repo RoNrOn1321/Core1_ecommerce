@@ -2,7 +2,7 @@
 // Customer Products API
 
 // Headers are set in index.php
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);

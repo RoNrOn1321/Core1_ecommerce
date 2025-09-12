@@ -1,13 +1,39 @@
 <?php
 // Customer Authentication API
-require_once '../auth/functions.php';
+require_once __DIR__ . '/../auth/functions.php';
+
+// Set proper headers
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Get request information
+$requestUri = $_SERVER['REQUEST_URI'];
+$requestMethod = $_SERVER['REQUEST_METHOD'];
+$requestPath = parse_url($requestUri, PHP_URL_PATH);
+
+// Remove base path to get API endpoint
+$basePath = '/Core1_ecommerce/customer/api';
+$endpoint = str_replace($basePath, '', $requestPath);
+$endpoint = trim($endpoint, '/');
+
+// Split endpoint into parts
+$endpointParts = explode('/', $endpoint);
+$module = $endpointParts[0] ?? '';
+$action = $endpointParts[1] ?? '';
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 
 switch ($action) {
     case 'register':
-        if ($requestMethod !== 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
             break;
@@ -50,7 +76,7 @@ switch ($action) {
         break;
         
     case 'login':
-        if ($requestMethod !== 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
             break;
@@ -77,7 +103,7 @@ switch ($action) {
         break;
         
     case 'logout':
-        if ($requestMethod !== 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
             break;
@@ -88,7 +114,7 @@ switch ($action) {
         break;
         
     case 'me':
-        if ($requestMethod !== 'GET') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
             break;
@@ -114,7 +140,7 @@ switch ($action) {
         break;
         
     case 'verify':
-        if ($requestMethod !== 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
             break;
@@ -133,7 +159,7 @@ switch ($action) {
         break;
         
     case 'forgot-password':
-        if ($requestMethod !== 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
             break;
@@ -152,7 +178,7 @@ switch ($action) {
         break;
         
     case 'reset-password':
-        if ($requestMethod !== 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
             break;

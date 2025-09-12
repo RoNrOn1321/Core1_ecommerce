@@ -106,7 +106,7 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
                                     <span class="font-semibold text-gray-900">Total:</span>
                                     <span class="font-bold text-xl text-amber-600">₱<span id="miniCartTotal">0.00</span></span>
                                 </div>
-                                <button id="miniCheckoutBtn" class="w-full bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">
+                                <button id="miniCheckoutBtn" onclick="proceedToCheckout()" class="w-full bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">
                                     <i class="fas fa-shopping-cart mr-2"></i> Checkout
                                 </button>
                             </div>
@@ -367,6 +367,39 @@ async function logout() {
         }
     } catch (error) {
         showToast('Logout failed', 'error');
+    }
+}
+
+// Checkout function with authentication check
+async function proceedToCheckout() {
+    try {
+        // Check if user is logged in
+        const profileResponse = await customerAPI.auth.getProfile();
+        
+        if (!profileResponse.success) {
+            showToast('Please log in to proceed to checkout', 'warning');
+            setTimeout(() => {
+                window.location.href = '<?php echo $basePath; ?>login.php?redirect=checkout';
+            }, 1500);
+            return;
+        }
+        
+        // Check if cart has items
+        const cartResponse = await customerAPI.cart.getItems();
+        if (!cartResponse.success || !cartResponse.data || cartResponse.data.length === 0) {
+            showToast('Your cart is empty', 'error');
+            return;
+        }
+        
+        // Redirect to checkout page
+        window.location.href = '<?php echo $basePath; ?>checkout.php';
+        
+    } catch (error) {
+        console.error('Checkout error:', error);
+        showToast('Please log in to proceed to checkout', 'warning');
+        setTimeout(() => {
+            window.location.href = '<?php echo $basePath; ?>login.php?redirect=checkout';
+        }, 1500);
     }
 }
 
