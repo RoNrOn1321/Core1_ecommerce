@@ -465,8 +465,8 @@ async function submitTicket() {
             order_number: orderNumber || null
         };
         
-        // Submit ticket via API
-        const response = await customerAPI.support.createTicket(ticketData);
+        // Submit ticket via API with files
+        const response = await customerAPI.support.createTicket(ticketData, selectedFiles);
         
         if (response.success) {
             // Show success state
@@ -476,6 +476,11 @@ async function submitTicket() {
             
             // Clear form data from localStorage
             localStorage.removeItem('ticketDraft');
+            
+            // Show attachment count if any
+            if (response.data.attachment_count > 0) {
+                showToast(`Ticket created with ${response.data.attachment_count} attachment(s)`, 'success');
+            }
             
         } else {
             throw new Error(response.message || 'Failed to create ticket');

@@ -156,10 +156,40 @@ try {
     $stmt->execute([$ticket_id]);
     $messages = $stmt->fetchAll();
     
+    // Get attachments for each message (fix PHP reference issue)
+    foreach ($messages as $key => $message) {
+        $attachmentStmt = $pdo->prepare("
+            SELECT id, original_filename, filename, file_size, mime_type, created_at
+            FROM support_ticket_attachments 
+            WHERE ticket_id = ? AND message_id = ?
+            ORDER BY created_at ASC
+        ");
+        $attachmentStmt->execute([$ticket_id, $message['id']]);
+        $attachments = $attachmentStmt->fetchAll();
+        
+        // Add download URLs to attachments
+        foreach ($attachments as $attachKey => $attachment) {
+            $attachments[$attachKey]['download_url'] = "download_ticket_attachment.php?id=" . $attachment['id'];
+            $attachments[$attachKey]['name'] = $attachment['original_filename'];
+            $attachments[$attachKey]['size'] = (int)$attachment['file_size'];
+        }
+        
+        $messages[$key]['attachments'] = $attachments;
+    }
+    
 } catch (PDOException $e) {
     $error_message = 'Error fetching ticket details.';
     $ticket = null;
     $messages = [];
+}
+
+// Helper function to format file sizes
+function formatFileSize($bytes) {
+    if ($bytes == 0) return '0 Bytes';
+    $k = 1024;
+    $sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    $i = floor(log($bytes) / log($k));
+    return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
 }
 ?>
 <!doctype html>
@@ -432,6 +462,53 @@ try {
                                                         <strong><?php echo htmlspecialchars($message['sender_name']); ?></strong>
                                                         <small class="badge badge-secondary ml-2">Internal Note</small>
                                                         <div class="mb-2 text-muted"><?php echo nl2br(htmlspecialchars($message['message'])); ?></div>
+                                                        
+                                                        <?php if (!empty($message['attachments'])): ?>
+                                                            <div class="mt-3 mb-2">
+                                                                <div class="text-muted mb-2">
+                                                                    <i class="fe fe-paperclip"></i> 
+                                                                    <small>Attachments (<?php echo count($message['attachments']); ?>):</small>
+                                                                </div>
+                                                                <?php foreach ($message['attachments'] as $attachment): ?>
+                                                                    <div class="mb-1">
+                                                                        <?php if (strpos($attachment['mime_type'], 'image/') === 0): ?>
+                                                                            <a href="<?php echo htmlspecialchars($attachment['download_url']); ?>" target="_blank" class="text-decoration-none">
+                                                                                <div class="d-flex align-items-center p-2 border rounded bg-white">
+                                                                                    <i class="fe fe-image text-primary mr-2"></i>
+                                                                                    <div class="flex-grow-1">
+                                                                                        <div class="small font-weight-medium text-dark">
+                                                                                            <?php echo htmlspecialchars($attachment['name']); ?>
+                                                                                        </div>
+                                                                                        <div class="text-muted small">
+                                                                                            <?php echo formatFileSize($attachment['size']); ?> • Click to view
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <img src="<?php echo htmlspecialchars($attachment['download_url']); ?>" 
+                                                                                         alt="Preview" 
+                                                                                         class="rounded ml-2" 
+                                                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                                                </div>
+                                                                            </a>
+                                                                        <?php else: ?>
+                                                                            <a href="<?php echo htmlspecialchars($attachment['download_url']); ?>" target="_blank" class="text-decoration-none">
+                                                                                <div class="d-flex align-items-center p-2 border rounded bg-white">
+                                                                                    <i class="fe fe-file text-info mr-2"></i>
+                                                                                    <div class="flex-grow-1">
+                                                                                        <div class="small font-weight-medium text-dark">
+                                                                                            <?php echo htmlspecialchars($attachment['name']); ?>
+                                                                                        </div>
+                                                                                        <div class="text-muted small">
+                                                                                            <?php echo formatFileSize($attachment['size']); ?> • Click to download
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </a>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        
                                                         <small class="text-muted"><?php echo date('M d, Y h:i A', strtotime($message['created_at'])); ?></small>
                                                     </div>
                                                 </div>
@@ -457,6 +534,55 @@ try {
                                                             <br><small class="text-muted"><?php echo htmlspecialchars($message['sender_email']); ?></small>
                                                         <?php endif; ?>
                                                         <div class="mb-2 mt-2"><?php echo nl2br(htmlspecialchars($message['message'])); ?></div>
+                                                        
+                                                        <?php if (!empty($message['attachments'])): ?>
+                                                            <div class="mt-3 mb-2">
+                                                                <div class="text-muted mb-2">
+                                                                    <i class="fe fe-paperclip"></i> 
+                                                                    <small>Attachments (<?php echo count($message['attachments']); ?>):</small>
+                                                                </div>
+                                                                <?php foreach ($message['attachments'] as $attachment): ?>
+                                                                    <div class="mb-1">
+                                                                        <?php if (strpos($attachment['mime_type'], 'image/') === 0): ?>
+                                                                            <!-- Image attachment with preview -->
+                                                                            <a href="<?php echo htmlspecialchars($attachment['download_url']); ?>" target="_blank" class="text-decoration-none">
+                                                                                <div class="d-flex align-items-center p-2 border rounded bg-light">
+                                                                                    <i class="fe fe-image text-primary mr-2"></i>
+                                                                                    <div class="flex-grow-1">
+                                                                                        <div class="small font-weight-medium text-dark">
+                                                                                            <?php echo htmlspecialchars($attachment['name']); ?>
+                                                                                        </div>
+                                                                                        <div class="text-muted small">
+                                                                                            <?php echo formatFileSize($attachment['size']); ?> • Click to view
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <img src="<?php echo htmlspecialchars($attachment['download_url']); ?>" 
+                                                                                         alt="Preview" 
+                                                                                         class="rounded ml-2" 
+                                                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                                                </div>
+                                                                            </a>
+                                                                        <?php else: ?>
+                                                                            <!-- Non-image attachment -->
+                                                                            <a href="<?php echo htmlspecialchars($attachment['download_url']); ?>" target="_blank" class="text-decoration-none">
+                                                                                <div class="d-flex align-items-center p-2 border rounded bg-light">
+                                                                                    <i class="fe fe-file text-info mr-2"></i>
+                                                                                    <div class="flex-grow-1">
+                                                                                        <div class="small font-weight-medium text-dark">
+                                                                                            <?php echo htmlspecialchars($attachment['name']); ?>
+                                                                                        </div>
+                                                                                        <div class="text-muted small">
+                                                                                            <?php echo formatFileSize($attachment['size']); ?> • Click to download
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </a>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        
                                                         <small class="text-muted"><?php echo date('M d, Y h:i A', strtotime($message['created_at'])); ?></small>
                                                     </div>
                                                     <div class="col-auto">

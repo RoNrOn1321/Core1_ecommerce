@@ -77,6 +77,14 @@ try {
 
 function createTicket($pdo, $customerId, $data) {
     try {
+        // Handle both JSON and form data submissions
+        $isFormData = !empty($_FILES);
+        
+        if ($isFormData) {
+            // Form data submission (with files)
+            $data = $_POST;
+        }
+        
         // Validate required fields
         $requiredFields = ['category', 'priority', 'subject', 'description'];
         foreach ($requiredFields as $field) {
@@ -111,6 +119,18 @@ function createTicket($pdo, $customerId, $data) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Subject must be 200 characters or less']);
             return;
+        }
+        
+        // Validate files if present
+        $uploadedFiles = [];
+        if ($isFormData && !empty($_FILES['attachments'])) {
+            $fileValidation = validateUploadedFiles($_FILES['attachments']);
+            if (!$fileValidation['success']) {
+                http_response_code(400);
+                echo json_encode($fileValidation);
+                return;
+            }
+            $uploadedFiles = $fileValidation['files'];
         }
         
         $pdo->beginTransaction();
@@ -162,6 +182,14 @@ function createTicket($pdo, $customerId, $data) {
             trim($data['description'])
         ]);
         
+        $messageId = $pdo->lastInsertId();
+        
+        // Handle file uploads
+        $attachmentIds = [];
+        if (!empty($uploadedFiles)) {
+            $attachmentIds = saveTicketAttachments($pdo, $ticketId, $messageId, $uploadedFiles, $customerId);
+        }
+        
         $pdo->commit();
         
         // Get the created ticket details
@@ -187,7 +215,8 @@ function createTicket($pdo, $customerId, $data) {
                 'category' => $ticket['category'],
                 'priority' => $ticket['priority'],
                 'status' => $ticket['status'],
-                'created_at' => $ticket['created_at']
+                'created_at' => $ticket['created_at'],
+                'attachment_count' => count($attachmentIds)
             ]
         ]);
         
@@ -333,6 +362,150 @@ function getTicketById($pdo, $customerId, $ticketId) {
     } catch (Exception $e) {
         throw $e;
     }
+}
+
+function validateUploadedFiles($files) {
+    $maxFileSize = 5 * 1024 * 1024; // 5MB
+    $allowedMimeTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'
+    ];
+    
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'];
+    $validatedFiles = [];
+    
+    // Handle single file or multiple files
+    if (!isset($files['name'][0])) {
+        // Single file
+        $files = [
+            'name' => [$files['name']],
+            'type' => [$files['type']],
+            'tmp_name' => [$files['tmp_name']],
+            'error' => [$files['error']],
+            'size' => [$files['size']]
+        ];
+    }
+    
+    for ($i = 0; $i < count($files['name']); $i++) {
+        if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) {
+            continue; // Skip empty files
+        }
+        
+        if ($files['error'][$i] !== UPLOAD_ERR_OK) {
+            return [
+                'success' => false, 
+                'message' => 'File upload error: ' . $files['name'][$i]
+            ];
+        }
+        
+        // Check file size
+        if ($files['size'][$i] > $maxFileSize) {
+            return [
+                'success' => false, 
+                'message' => "File '{$files['name'][$i]}' is too large. Maximum size is 5MB."
+            ];
+        }
+        
+        // Check file extension
+        $extension = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
+        if (!in_array($extension, $allowedExtensions)) {
+            return [
+                'success' => false, 
+                'message' => "File '{$files['name'][$i]}' has unsupported format."
+            ];
+        }
+        
+        // Check MIME type
+        $mimeType = $files['type'][$i];
+        if (!in_array($mimeType, $allowedMimeTypes)) {
+            return [
+                'success' => false, 
+                'message' => "File '{$files['name'][$i]}' has unsupported MIME type."
+            ];
+        }
+        
+        // Verify file exists (for real uploads, also check if it's uploaded via HTTP)
+        if (!file_exists($files['tmp_name'][$i])) {
+            return [
+                'success' => false, 
+                'message' => "File not found: {$files['name'][$i]}"
+            ];
+        }
+        
+        // For security, verify it's a real uploaded file (skip for testing/CLI)
+        if (isset($_SERVER['REQUEST_METHOD']) && !is_uploaded_file($files['tmp_name'][$i])) {
+            return [
+                'success' => false, 
+                'message' => "Invalid file upload: {$files['name'][$i]}"
+            ];
+        }
+        
+        $validatedFiles[] = [
+            'name' => $files['name'][$i],
+            'type' => $files['type'][$i],
+            'tmp_name' => $files['tmp_name'][$i],
+            'size' => $files['size'][$i],
+            'extension' => $extension
+        ];
+    }
+    
+    return [
+        'success' => true,
+        'files' => $validatedFiles
+    ];
+}
+
+function saveTicketAttachments($pdo, $ticketId, $messageId, $files, $customerId) {
+    $uploadDir = __DIR__ . '/../../../uploads/tickets/';
+    $attachmentIds = [];
+    
+    // Create ticket-specific directory
+    $ticketDir = $uploadDir . $ticketId . '/';
+    if (!is_dir($ticketDir)) {
+        if (!mkdir($ticketDir, 0755, true)) {
+            throw new Exception('Failed to create upload directory');
+        }
+    }
+    
+    foreach ($files as $file) {
+        // Generate unique filename
+        $filename = uniqid() . '_' . time() . '.' . $file['extension'];
+        $filePath = $ticketDir . $filename;
+        $dbFilePath = 'uploads/tickets/' . $ticketId . '/' . $filename;
+        
+        // Move uploaded file
+        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            throw new Exception("Failed to save file: {$file['name']}");
+        }
+        
+        // Insert attachment record
+        $stmt = $pdo->prepare("
+            INSERT INTO support_ticket_attachments (
+                ticket_id, message_id, filename, original_filename, 
+                file_path, file_size, mime_type, uploaded_by_type, 
+                uploaded_by_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+        
+        $stmt->execute([
+            $ticketId,
+            $messageId,
+            $filename,
+            $file['name'],
+            $dbFilePath,
+            $file['size'],
+            $file['type'],
+            'customer',
+            $customerId
+        ]);
+        
+        $attachmentIds[] = $pdo->lastInsertId();
+    }
+    
+    return $attachmentIds;
 }
 
 function generateTicketNumber($pdo) {

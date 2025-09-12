@@ -9,7 +9,6 @@ const customerAPI = {
         const config = {
             method: method.toUpperCase(),
             headers: {
-                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 ...options.headers
             },
@@ -17,8 +16,16 @@ const customerAPI = {
             ...options
         };
 
-        if (data && ['POST', 'PUT', 'PATCH'].includes(config.method)) {
-            config.body = JSON.stringify(data);
+        // Handle FormData vs JSON
+        if (options.body instanceof FormData) {
+            // Use FormData directly, don't set Content-Type
+            config.body = options.body;
+        } else {
+            // JSON data
+            config.headers['Content-Type'] = 'application/json';
+            if (data && ['POST', 'PUT', 'PATCH'].includes(config.method)) {
+                config.body = JSON.stringify(data);
+            }
         }
 
         try {
@@ -243,8 +250,35 @@ const customerAPI = {
             return customerAPI.get('/support/tickets');
         },
 
-        async createTicket(ticketData) {
-            return customerAPI.post('/support/tickets', ticketData);
+        async createTicket(ticketData, files = null) {
+            if (files && files.length > 0) {
+                // Create FormData for file upload
+                const formData = new FormData();
+                
+                // Add ticket data to FormData
+                Object.keys(ticketData).forEach(key => {
+                    if (ticketData[key] !== null && ticketData[key] !== undefined) {
+                        formData.append(key, ticketData[key]);
+                    }
+                });
+                
+                // Add files to FormData
+                files.forEach(file => {
+                    formData.append('attachments[]', file);
+                });
+                
+                // Use request method directly with FormData
+                return customerAPI.request('POST', '/support/tickets', null, {
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                        // Don't set Content-Type, let browser set it for FormData
+                    }
+                });
+            } else {
+                // Regular JSON request without files
+                return customerAPI.post('/support/tickets', ticketData);
+            }
         },
 
         async getTicket(id) {
@@ -255,8 +289,29 @@ const customerAPI = {
             return customerAPI.get(`/support/messages/${ticketId}`);
         },
 
-        async sendReply(ticketId, message) {
-            return customerAPI.post(`/support/messages/${ticketId}`, { message });
+        async sendReply(ticketId, message, files = null) {
+            if (files && files.length > 0) {
+                // Create FormData for file upload
+                const formData = new FormData();
+                formData.append('message', message);
+                
+                // Add files to FormData
+                files.forEach(file => {
+                    formData.append('attachments[]', file);
+                });
+                
+                // Use request method directly with FormData
+                return customerAPI.request('POST', `/support/messages/${ticketId}`, null, {
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                        // Don't set Content-Type, let browser set it for FormData
+                    }
+                });
+            } else {
+                // Regular JSON request without files
+                return customerAPI.post(`/support/messages/${ticketId}`, { message });
+            }
         },
 
         async getUnreadNotifications() {

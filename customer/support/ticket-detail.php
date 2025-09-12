@@ -463,10 +463,14 @@ async function handleReplySubmit(e) {
     sendBtn.disabled = true;
     
     try {
-        const response = await customerAPI.support.sendReply(ticketId, replyMessage);
+        const response = await customerAPI.support.sendReply(ticketId, replyMessage, selectedAttachments);
         
         if (response.success) {
-            showToast('Reply sent successfully!', 'success');
+            let successMessage = 'Reply sent successfully!';
+            if (response.data && response.data.attachment_count > 0) {
+                successMessage += ` (${response.data.attachment_count} attachment${response.data.attachment_count === 1 ? '' : 's'} uploaded)`;
+            }
+            showToast(successMessage, 'success');
             
             // Clear form
             document.getElementById('replyMessage').value = '';
@@ -625,8 +629,48 @@ function escapeHtml(text) {
 
 // Toast notification function
 function showToast(message, type = 'success') {
-    if (typeof window.showToast === 'function') {
-        window.showToast(message, type);
+    // Check if the global toast element exists (from navbar)
+    const globalToast = document.getElementById('toast');
+    if (globalToast) {
+        // Use the navbar's toast system
+        const toast = globalToast;
+        
+        // Remove existing classes and add base classes
+        toast.className = 'fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-x-full opacity-0';
+        
+        // Add type-specific classes
+        switch(type) {
+            case 'success':
+                toast.classList.add('bg-green-500', 'text-white');
+                break;
+            case 'error':
+                toast.classList.add('bg-red-500', 'text-white');
+                break;
+            case 'info':
+                toast.classList.add('bg-blue-500', 'text-white');
+                break;
+            case 'warning':
+                toast.classList.add('bg-yellow-500', 'text-white');
+                break;
+        }
+        
+        toast.textContent = message;
+        toast.style.display = 'block';
+        
+        // Show toast with animation
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            toast.classList.add('translate-x-0', 'opacity-100');
+        }, 10);
+
+        // Hide toast after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('translate-x-0', 'opacity-100');
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 300);
+        }, 3000);
         return;
     }
     
