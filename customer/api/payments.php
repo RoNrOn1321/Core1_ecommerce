@@ -23,7 +23,9 @@ $userId = $_SESSION['customer_id'];
 
 $payMongo = new PayMongo();
 
+
 switch ($action) {
+        
     case 'create-gcash-payment':
     case 'create_gcash_payment':
         if ($requestMethod !== 'POST') {

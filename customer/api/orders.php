@@ -20,89 +20,9 @@ if (!isset($_SESSION['customer_id'])) {
 }
 $userId = $_SESSION['customer_id'];
 
+
 switch ($action) {
-    case '':
-    case 'list':
-        if ($requestMethod !== 'GET') {
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-            break;
-        }
         
-        try {
-            // Get query parameters
-            $page = max(1, intval($_GET['page'] ?? 1));
-            $limit = min(50, max(1, intval($_GET['limit'] ?? 10)));
-            $offset = ($page - 1) * $limit;
-            $status = $_GET['status'] ?? null;
-            
-            $whereClause = "WHERE o.user_id = ?";
-            $params = [$userId];
-            
-            if ($status && in_array($status, ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])) {
-                $whereClause .= " AND o.status = ?";
-                $params[] = $status;
-            }
-            
-            $sql = "
-                SELECT 
-                    o.id,
-                    o.order_number,
-                    o.status,
-                    o.subtotal,
-                    o.tax_amount,
-                    o.shipping_cost,
-                    o.discount_amount,
-                    o.total_amount,
-                    o.payment_method,
-                    o.payment_status,
-                    o.created_at,
-                    COUNT(oi.id) as item_count
-                FROM orders o
-                LEFT JOIN order_items oi ON o.id = oi.order_id
-                $whereClause
-                GROUP BY o.id
-                ORDER BY o.created_at DESC
-                LIMIT ? OFFSET ?
-            ";
-            
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([...$params, $limit, $offset]);
-            $orders = $stmt->fetchAll();
-            
-            // Get total count for pagination
-            $countSql = "SELECT COUNT(*) as total FROM orders o $whereClause";
-            $countStmt = $pdo->prepare($countSql);
-            $countStmt->execute($params);
-            $totalCount = $countStmt->fetch()['total'];
-            
-            // Format orders
-            foreach ($orders as &$order) {
-                $order['id'] = intval($order['id']);
-                $order['subtotal'] = floatval($order['subtotal']);
-                $order['tax_amount'] = floatval($order['tax_amount']);
-                $order['shipping_cost'] = floatval($order['shipping_cost']);
-                $order['discount_amount'] = floatval($order['discount_amount']);
-                $order['total_amount'] = floatval($order['total_amount']);
-                $order['item_count'] = intval($order['item_count']);
-            }
-            
-            echo json_encode([
-                'success' => true,
-                'data' => $orders,
-                'pagination' => [
-                    'current_page' => $page,
-                    'per_page' => $limit,
-                    'total_items' => intval($totalCount),
-                    'total_pages' => ceil($totalCount / $limit)
-                ]
-            ]);
-            
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Failed to fetch orders: ' . $e->getMessage()]);
-        }
-        break;
         
     case 'show':
     case 'details':
@@ -194,8 +114,86 @@ switch ($action) {
         }
         break;
         
-    case 'create':
     case '':
+    case 'create':
+        if ($requestMethod === 'GET') {
+            // Handle GET /orders (list orders)
+            try {
+                // Get query parameters
+                $page = max(1, intval($_GET['page'] ?? 1));
+                $limit = min(50, max(1, intval($_GET['limit'] ?? 10)));
+                $offset = ($page - 1) * $limit;
+                $status = $_GET['status'] ?? null;
+                
+                $whereClause = "WHERE o.user_id = ?";
+                $params = [$userId];
+                
+                if ($status && in_array($status, ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])) {
+                    $whereClause .= " AND o.status = ?";
+                    $params[] = $status;
+                }
+                
+                $sql = "
+                    SELECT 
+                        o.id,
+                        o.order_number,
+                        o.status,
+                        o.subtotal,
+                        o.tax_amount,
+                        o.shipping_cost,
+                        o.discount_amount,
+                        o.total_amount,
+                        o.payment_method,
+                        o.payment_status,
+                        o.created_at,
+                        COUNT(oi.id) as item_count
+                    FROM orders o
+                    LEFT JOIN order_items oi ON o.id = oi.order_id
+                    $whereClause
+                    GROUP BY o.id
+                    ORDER BY o.created_at DESC
+                    LIMIT ? OFFSET ?
+                ";
+                
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([...$params, $limit, $offset]);
+                $orders = $stmt->fetchAll();
+                
+                // Get total count for pagination
+                $countSql = "SELECT COUNT(*) as total FROM orders o $whereClause";
+                $countStmt = $pdo->prepare($countSql);
+                $countStmt->execute($params);
+                $totalCount = $countStmt->fetch()['total'];
+                
+                // Format orders
+                foreach ($orders as &$order) {
+                    $order['id'] = intval($order['id']);
+                    $order['subtotal'] = floatval($order['subtotal']);
+                    $order['tax_amount'] = floatval($order['tax_amount']);
+                    $order['shipping_cost'] = floatval($order['shipping_cost']);
+                    $order['discount_amount'] = floatval($order['discount_amount']);
+                    $order['total_amount'] = floatval($order['total_amount']);
+                    $order['item_count'] = intval($order['item_count']);
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'data' => $orders,
+                    'pagination' => [
+                        'current_page' => $page,
+                        'per_page' => $limit,
+                        'total_items' => intval($totalCount),
+                        'total_pages' => ceil($totalCount / $limit)
+                    ]
+                ]);
+                
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to fetch orders: ' . $e->getMessage()]);
+            }
+            break;
+        }
+        
         if ($requestMethod !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
@@ -455,6 +453,14 @@ switch ($action) {
         
     default:
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Orders endpoint not found']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Orders endpoint not found',
+            'debug' => [
+                'action' => $action,
+                'method' => $requestMethod,
+                'user_id' => $userId
+            ]
+        ]);
 }
 ?>
