@@ -197,9 +197,19 @@ try {
                                 <td class="border border-gray-300 px-4 py-3">
                                     <div class="flex items-center space-x-3">
                                         <?php if ($item['product_image']): ?>
-                                        <img src="/Core1_ecommerce/uploads/<?php echo htmlspecialchars($item['product_image']); ?>" 
+                                        <?php
+                                        // Handle product image URL properly
+                                        $imageUrl = $item['product_image'];
+                                        if (strpos($imageUrl, 'http') === 0 || strpos($imageUrl, '/') === 0) {
+                                            $imageSrc = $imageUrl;
+                                        } else {
+                                            $imageSrc = '/Core1_ecommerce/uploads/' . $imageUrl;
+                                        }
+                                        ?>
+                                        <img src="<?php echo htmlspecialchars($imageSrc); ?>" 
                                              alt="<?php echo htmlspecialchars($item['product_name']); ?>" 
-                                             class="w-12 h-12 object-cover rounded">
+                                             class="w-12 h-12 object-cover rounded"
+                                             onerror="this.src='/Core1_ecommerce/customer/images/no-image.png'">
                                         <?php else: ?>
                                         <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
                                             <i class="fas fa-image text-gray-400"></i>

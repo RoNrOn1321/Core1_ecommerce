@@ -134,7 +134,7 @@ class CustomerAuth {
         
         try {
             $stmt = $this->pdo->prepare("
-                SELECT id, email, first_name, last_name, phone, email_verified, created_at
+                SELECT id, email, first_name, last_name, phone, profile_image, email_verified, created_at
                 FROM users WHERE id = ?
             ");
             $stmt->execute([$_SESSION['customer_id']]);

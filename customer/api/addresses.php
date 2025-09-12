@@ -20,6 +20,47 @@ if (!isset($_SESSION['customer_id'])) {
 }
 $userId = $_SESSION['customer_id'];
 
+// Handle routing when called directly (for backwards compatibility)
+if (!isset($action) || !isset($requestMethod) || !isset($id)) {
+    $requestUri = $_SERVER['REQUEST_URI'];
+    $requestMethod = $_SERVER['REQUEST_METHOD'];
+    $requestPath = parse_url($requestUri, PHP_URL_PATH);
+    
+    // Remove base path to get API endpoint
+    $basePath = '/Core1_ecommerce/customer/api';
+    $endpoint = str_replace($basePath, '', $requestPath);
+    $endpoint = trim($endpoint, '/');
+    
+    // Split endpoint into parts
+    $endpointParts = explode('/', $endpoint);
+    $module = $endpointParts[0] ?? '';
+    $action = $endpointParts[1] ?? '';
+    $id = $endpointParts[2] ?? null;
+    
+    // Handle special case for addresses/{id} -> show action
+    if ($module === 'addresses' && is_numeric($action)) {
+        $id = $action;
+        $action = 'show';
+    }
+    
+    // Handle addresses/{id}/default -> default action
+    if ($module === 'addresses' && is_numeric($action) && isset($endpointParts[2]) && $endpointParts[2] === 'default') {
+        $id = $action;
+        $action = 'default';
+    }
+    
+    // Handle POST requests to create addresses
+    if ($module === 'addresses' && $requestMethod === 'POST' && empty($action)) {
+        $action = 'create';
+    }
+    
+    // Handle PUT/DELETE requests to specific addresses
+    if ($module === 'addresses' && is_numeric($action) && ($requestMethod === 'PUT' || $requestMethod === 'DELETE')) {
+        $id = $action;
+        $action = $requestMethod === 'PUT' ? 'update' : 'delete';
+    }
+}
+
 switch ($action) {
     case '':
     case 'list':
@@ -157,8 +198,8 @@ switch ($action) {
                 INSERT INTO user_addresses (
                     user_id, type, label, first_name, last_name, company,
                     address_line_1, address_line_2, city, state, postal_code, 
-                    country, phone, is_default, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                    country, latitude, longitude, phone, is_default, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             
             $stmt->execute([
@@ -174,6 +215,8 @@ switch ($action) {
                 $input['state'],
                 $input['postal_code'] ?? null,
                 $input['country'] ?? 'Philippines',
+                $input['latitude'] ?? null,
+                $input['longitude'] ?? null,
                 $input['phone'] ?? null,
                 $isDefault ? 1 : 0
             ]);
@@ -240,7 +283,7 @@ switch ($action) {
             $allowedFields = [
                 'type', 'label', 'first_name', 'last_name', 'company',
                 'address_line_1', 'address_line_2', 'city', 'state', 
-                'postal_code', 'country', 'phone'
+                'postal_code', 'country', 'latitude', 'longitude', 'phone'
             ];
             
             foreach ($allowedFields as $field) {

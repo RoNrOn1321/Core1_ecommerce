@@ -118,8 +118,11 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
                 <div class="relative">
                     <?php if ($isLoggedIn): ?>
                         <button id="userMenuToggle" class="flex items-center space-x-2 p-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
-                            <div class="w-8 h-8 bg-amber-600 text-white rounded-full flex items-center justify-center">
-                                <i class="fas fa-user text-sm"></i>
+                            <div id="navProfileImageContainer" class="w-8 h-8 rounded-full overflow-hidden">
+                                <img id="navProfileImage" src="" alt="Profile" class="w-full h-full object-cover" style="display: none;">
+                                <div id="navProfilePlaceholder" class="w-full h-full bg-amber-600 text-white flex items-center justify-center">
+                                    <i class="fas fa-user text-sm"></i>
+                                </div>
                             </div>
                             <span class="hidden md:block font-medium"><?php echo htmlspecialchars(explode(' ', $customerName)[0]); ?></span>
                             <i class="fas fa-chevron-down text-sm"></i>
@@ -132,7 +135,7 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
                                     <p class="font-medium text-gray-900"><?php echo htmlspecialchars($customerName); ?></p>
                                     <p class="text-sm text-gray-500"><?php echo htmlspecialchars($_SESSION['customer_email'] ?? ''); ?></p>
                                 </div>
-                                <a href="<?php echo $basePath; ?>account/dashboard.php" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                                <a href="<?php echo $basePath; ?>index.php" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
                                     <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
                                 </a>
                                 <a href="<?php echo $basePath; ?>account/orders.php" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
@@ -272,7 +275,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize cart count
     updateCartCount();
+    
+    // Initialize profile image
+    loadNavProfileImage();
 });
+
+// Load profile image in navbar
+async function loadNavProfileImage() {
+    try {
+        const response = await customerAPI.auth.getProfile();
+        if (response.success && response.customer && response.customer.profile_image) {
+            updateNavProfileImage(response.customer.profile_image);
+        }
+    } catch (error) {
+        // Silently fail - user may not be logged in
+    }
+}
+
+// Update navbar profile image
+function updateNavProfileImage(imageUrl) {
+    const navProfileImage = document.getElementById('navProfileImage');
+    const navProfilePlaceholder = document.getElementById('navProfilePlaceholder');
+    
+    if (imageUrl && navProfileImage && navProfilePlaceholder) {
+        navProfileImage.src = imageUrl;
+        navProfileImage.style.display = 'block';
+        navProfilePlaceholder.style.display = 'none';
+    }
+}
 
 // Helper function to get correct image URL
 function getCartItemImage(imageUrl) {

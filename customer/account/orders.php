@@ -48,7 +48,17 @@ $orderId = $_GET['order'] ?? null;
                     <li>
                         <div class="flex items-center">
                             <i class="fas fa-chevron-right text-gray-400 mx-4"></i>
-                            <a href="orders.php" class="text-gray-500 hover:text-gray-700">Orders</a>
+                            <a href="../account/orders.php" class="text-gray-500 hover:text-gray-700">Account</a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400 mx-4"></i>
+                            <?php if ($orderId): ?>
+                                <a href="orders.php" class="text-gray-500 hover:text-gray-700">Orders</a>
+                            <?php else: ?>
+                                <span class="text-gray-700 font-medium">Orders</span>
+                            <?php endif; ?>
                         </div>
                     </li>
                     <?php if ($orderId): ?>
@@ -61,6 +71,24 @@ $orderId = $_GET['order'] ?? null;
                     <?php endif; ?>
                 </ol>
             </nav>
+        </div>
+
+        <!-- Account Navigation -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex flex-wrap gap-4">
+                <a href="orders.php" class="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg">
+                    <i class="fas fa-box mr-2"></i>
+                    My Orders
+                </a>
+                <a href="addresses.php" class="flex items-center px-4 py-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    Addresses
+                </a>
+                <a href="profile.php" class="flex items-center px-4 py-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                    <i class="fas fa-user-edit mr-2"></i>
+                    Profile
+                </a>
+            </div>
         </div>
 
         <?php if ($orderId): ?>
