@@ -105,6 +105,46 @@ if (!empty($category_filter)) {
 $where_clause = empty($where_conditions) ? '' : 'WHERE ' . implode(' AND ', $where_conditions);
 
 try {
+    // Get analytics data
+    $analytics = [];
+    
+    // Get ticket analytics for the last 30 days
+    $analytics_stmt = $pdo->query("
+        SELECT 
+            COUNT(*) as total_tickets,
+            SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAYS) THEN 1 ELSE 0 END) as tickets_last_7_days,
+            SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 ELSE 0 END) as tickets_today,
+            AVG(CASE WHEN resolved_at IS NOT NULL THEN TIMESTAMPDIFF(HOUR, created_at, resolved_at) END) as avg_resolution_time_hours,
+            SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_tickets,
+            SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open_tickets,
+            SUM(CASE WHEN priority = 'urgent' AND status IN ('open', 'in_progress') THEN 1 ELSE 0 END) as urgent_tickets,
+            SUM(CASE WHEN updated_at < DATE_SUB(NOW(), INTERVAL 24 HOUR) AND status IN ('open', 'in_progress') THEN 1 ELSE 0 END) as stale_tickets
+        FROM support_tickets
+    ");
+    $analytics = $analytics_stmt->fetch();
+    
+    // Get category breakdown
+    $category_stmt = $pdo->query("
+        SELECT category, COUNT(*) as count 
+        FROM support_tickets 
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAYS)
+        GROUP BY category 
+        ORDER BY count DESC
+    ");
+    $category_data = $category_stmt->fetchAll();
+    
+    // Get response time by priority
+    $priority_stmt = $pdo->query("
+        SELECT 
+            priority,
+            COUNT(*) as total,
+            AVG(CASE WHEN resolved_at IS NOT NULL THEN TIMESTAMPDIFF(HOUR, created_at, resolved_at) END) as avg_resolution_time
+        FROM support_tickets 
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAYS)
+        GROUP BY priority
+    ");
+    $priority_data = $priority_stmt->fetchAll();
+    
     // Get total count
     $count_stmt = $pdo->prepare("
         SELECT COUNT(*) as total 
@@ -155,6 +195,9 @@ try {
     $total_tickets = 0;
     $total_pages = 0;
     $status_counts = [];
+    $analytics = [];
+    $category_data = [];
+    $priority_data = [];
 }
 ?>
 <!doctype html>
@@ -170,6 +213,54 @@ try {
     <link rel="stylesheet" href="css/daterangepicker.css">
     <link rel="stylesheet" href="css/app-light.css" id="lightTheme">
     <link rel="stylesheet" href="css/app-dark.css" id="darkTheme" disabled>
+    <style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+    .text-xs {
+        font-size: 0.75rem;
+    }
+    .font-weight-bold {
+        font-weight: 700 !important;
+    }
+    .progress {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 0.35rem;
+    }
+    .analytics-card {
+        transition: transform 0.2s;
+    }
+    .analytics-card:hover {
+        transform: translateY(-2px);
+    }
+    .alert-urgent {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
+    .card-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .card-stats .card-body {
+        padding: 1.5rem;
+    }
+    </style>
 </head>
 <body class="vertical light">
     <div class="wrapper">
@@ -289,6 +380,11 @@ try {
                             <div class="col">
                                 <h2 class="h5 page-title">Support & Tickets</h2>
                             </div>
+                            <div class="col-auto">
+                                <a href="support_settings.php" class="btn btn-outline-primary">
+                                    <i class="fe fe-settings fe-12 mr-2"></i>Support Settings
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Success/Error Messages -->
@@ -309,6 +405,201 @@ try {
                                 </button>
                             </div>
                         <?php endif; ?>
+
+                        <!-- Analytics Dashboard -->
+                        <div class="row mb-4">
+                            <!-- Key Metrics Cards -->
+                            <div class="col-md-3 mb-4">
+                                <div class="card border-left-primary shadow h-100 py-2">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Open Tickets</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                    <?php echo number_format($analytics['open_tickets'] ?? 0); ?>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fe fe-alert-circle fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-4">
+                                <div class="card border-left-success shadow h-100 py-2">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Resolved (Total)</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                    <?php echo number_format($analytics['resolved_tickets'] ?? 0); ?>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fe fe-check-circle fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-4">
+                                <div class="card border-left-warning shadow h-100 py-2">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Urgent Tickets</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                    <?php echo number_format($analytics['urgent_tickets'] ?? 0); ?>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fe fe-zap fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-4">
+                                <div class="card border-left-info shadow h-100 py-2">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Avg Resolution</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                    <?php 
+                                                    $avg_hours = $analytics['avg_resolution_time_hours'] ?? 0;
+                                                    if ($avg_hours < 24) {
+                                                        echo number_format($avg_hours, 1) . 'h';
+                                                    } else {
+                                                        echo number_format($avg_hours / 24, 1) . 'd';
+                                                    }
+                                                    ?>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fe fe-clock fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Analytics Row -->
+                        <div class="row mb-4">
+                            <!-- Category Breakdown -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header">
+                                        <h6 class="m-0 font-weight-bold text-primary">Category Breakdown (Last 30 Days)</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <?php if (!empty($category_data)): ?>
+                                            <?php 
+                                            $total_category_tickets = array_sum(array_column($category_data, 'count'));
+                                            foreach ($category_data as $category): 
+                                                $percentage = $total_category_tickets > 0 ? ($category['count'] / $total_category_tickets) * 100 : 0;
+                                            ?>
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-sm font-weight-bold"><?php echo ucfirst($category['category']); ?></span>
+                                                        <span class="text-sm"><?php echo $category['count']; ?> tickets</span>
+                                                    </div>
+                                                    <div class="progress" style="height: 8px;">
+                                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                                             style="width: <?php echo $percentage; ?>%" 
+                                                             aria-valuenow="<?php echo $percentage; ?>" aria-valuemin="0" aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <div class="text-center text-muted py-3">
+                                                <i class="fe fe-bar-chart-2 fe-32 mb-2"></i>
+                                                <p>No ticket data available</p>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Priority Response Times -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header">
+                                        <h6 class="m-0 font-weight-bold text-primary">Avg Response Time by Priority</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <?php if (!empty($priority_data)): ?>
+                                            <?php foreach ($priority_data as $priority): ?>
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <div>
+                                                        <span class="badge badge-<?php 
+                                                            echo $priority['priority'] === 'urgent' ? 'danger' : 
+                                                                ($priority['priority'] === 'high' ? 'warning' : 
+                                                                ($priority['priority'] === 'medium' ? 'info' : 'secondary')); 
+                                                        ?>"><?php echo ucfirst($priority['priority']); ?></span>
+                                                        <small class="ml-2 text-muted"><?php echo $priority['total']; ?> tickets</small>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <strong>
+                                                            <?php 
+                                                            $avg_time = $priority['avg_resolution_time'] ?? 0;
+                                                            if ($avg_time < 24) {
+                                                                echo number_format($avg_time, 1) . ' hours';
+                                                            } else {
+                                                                echo number_format($avg_time / 24, 1) . ' days';
+                                                            }
+                                                            ?>
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <div class="text-center text-muted py-3">
+                                                <i class="fe fe-clock fe-32 mb-2"></i>
+                                                <p>No response time data available</p>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alert Cards -->
+                        <div class="row mb-4">
+                            <?php if (($analytics['urgent_tickets'] ?? 0) > 0): ?>
+                            <div class="col-md-6 mb-3">
+                                <div class="alert alert-danger">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fe fe-alert-triangle mr-3 fe-24"></i>
+                                        <div>
+                                            <h6 class="mb-1">Urgent Tickets Need Attention</h6>
+                                            <p class="mb-0">You have <?php echo $analytics['urgent_tickets']; ?> urgent ticket(s) that need immediate attention.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if (($analytics['stale_tickets'] ?? 0) > 0): ?>
+                            <div class="col-md-6 mb-3">
+                                <div class="alert alert-warning">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fe fe-clock mr-3 fe-24"></i>
+                                        <div>
+                                            <h6 class="mb-1">Stale Tickets</h6>
+                                            <p class="mb-0"><?php echo $analytics['stale_tickets']; ?> ticket(s) haven't been updated in 24+ hours.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
 
                         <!-- Status Tabs -->
                         <div class="card shadow mb-4">
