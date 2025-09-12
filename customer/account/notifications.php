@@ -125,9 +125,9 @@
                             </div>
                         </div>
                         
-                        <div id="notificationsList" class="max-h-screen overflow-y-auto">
+                        <div id="mainNotificationsList" class="max-h-screen overflow-y-auto">
                             <!-- Loading -->
-                            <div id="notificationsLoading" class="p-8 text-center">
+                            <div id="mainNotificationsLoading" class="p-8 text-center">
                                 <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
                                 <p class="text-gray-600">Loading notifications...</p>
                             </div>
@@ -165,9 +165,11 @@ document.addEventListener('DOMContentLoaded', function() {
 async function checkAuthenticationAndLoadNotifications() {
     try {
         const response = await customerAPI.auth.getProfile();
+        
         if (response.success && response.customer) {
             document.getElementById('authCheckLoader').style.display = 'none';
             document.getElementById('notificationsContent').style.display = 'block';
+            
             await loadNotifications();
             await updateFilterCounts();
         } else {
@@ -213,8 +215,8 @@ function setupEventListeners() {
 }
 
 async function loadNotifications(append = false) {
-    const loading = document.getElementById('notificationsLoading');
-    const list = document.getElementById('notificationsList');
+    const loading = document.getElementById('mainNotificationsLoading');
+    const list = document.getElementById('mainNotificationsList');
     
     if (!append) {
         loading.style.display = 'block';
@@ -266,10 +268,11 @@ async function loadMoreNotifications() {
 }
 
 function renderNotifications(notifications) {
-    const list = document.getElementById('notificationsList');
-    const loading = document.getElementById('notificationsLoading');
+    const list = document.getElementById('mainNotificationsList');
+    const loading = document.getElementById('mainNotificationsLoading');
     
     if (!notifications || notifications.length === 0) {
+        loading.style.display = 'none';
         list.innerHTML = loading.outerHTML + '<div class="p-8 text-center text-gray-500"><i class="fas fa-bell-slash text-4xl mb-4"></i><p class="text-lg">No notifications found</p><p class="text-sm">You\'re all caught up!</p></div>';
         return;
     }
@@ -318,6 +321,8 @@ function renderNotifications(notifications) {
         `;
     }).join('');
 
+    // Keep loading element available but hidden, then add notifications
+    loading.style.display = 'none';
     list.innerHTML = loading.outerHTML + notificationsHTML;
 }
 
@@ -345,6 +350,7 @@ function switchFilter(type) {
 async function updateFilterCounts() {
     try {
         const response = await customerAPI.notifications.getCount();
+        
         if (response.success && response.data) {
             const data = response.data;
             
