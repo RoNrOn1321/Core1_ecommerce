@@ -86,6 +86,8 @@ try {
 }
 ?>
 
+<script src="assets/js/customer-api.js"></script>
+
 <div class="no-print"><?php include 'components/navbar.php'; ?></div>
 
 <div class="container mx-auto px-4 py-8">
