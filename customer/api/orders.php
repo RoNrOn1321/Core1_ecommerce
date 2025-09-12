@@ -20,6 +20,35 @@ if (!isset($_SESSION['customer_id'])) {
 }
 $userId = $_SESSION['customer_id'];
 
+// Handle routing when called directly (for backwards compatibility)
+if (!isset($action) || !isset($requestMethod) || !isset($id)) {
+    $requestUri = $_SERVER['REQUEST_URI'];
+    $requestMethod = $_SERVER['REQUEST_METHOD'];
+    $requestPath = parse_url($requestUri, PHP_URL_PATH);
+    
+    // Remove base path to get API endpoint
+    $basePath = '/Core1_ecommerce/customer/api';
+    $endpoint = str_replace($basePath, '', $requestPath);
+    $endpoint = trim($endpoint, '/');
+    
+    // Split endpoint into parts
+    $endpointParts = explode('/', $endpoint);
+    $module = $endpointParts[0] ?? '';
+    $action = $endpointParts[1] ?? '';
+    $id = $endpointParts[2] ?? null;
+    
+    // Handle special case for orders/{id} -> show action
+    if ($module === 'orders' && is_numeric($action)) {
+        $id = $action;
+        $action = 'show';
+    }
+    
+    // Handle orders/{id}/status -> status action
+    if ($module === 'orders' && is_numeric($action) && isset($endpointParts[2]) && $endpointParts[2] === 'status') {
+        $id = $action;
+        $action = 'status';
+    }
+}
 
 switch ($action) {
         
@@ -356,6 +385,110 @@ switch ($action) {
             $pdo->rollBack();
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Failed to create order: ' . $e->getMessage()]);
+        }
+        break;
+        
+    case 'status':
+        if ($requestMethod !== 'PUT') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            break;
+        }
+        
+        $orderId = $id;
+        
+        if (!$orderId || !is_numeric($orderId)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Valid order ID required']);
+            break;
+        }
+        
+        if (!isset($input['status']) || !in_array($input['status'], ['cancelled'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Valid status required (cancelled)']);
+            break;
+        }
+        
+        $newStatus = $input['status'];
+        
+        try {
+            // Check if order exists and belongs to user
+            $stmt = $pdo->prepare("
+                SELECT id, status, order_number 
+                FROM orders 
+                WHERE id = ? AND user_id = ?
+            ");
+            $stmt->execute([$orderId, $userId]);
+            $order = $stmt->fetch();
+            
+            if (!$order) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Order not found']);
+                break;
+            }
+            
+            // Check if order can be cancelled
+            if ($newStatus === 'cancelled' && !in_array($order['status'], ['pending', 'processing'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Order cannot be cancelled at this stage',
+                    'current_status' => $order['status']
+                ]);
+                break;
+            }
+            
+            $pdo->beginTransaction();
+            
+            // Update order status
+            $stmt = $pdo->prepare("
+                UPDATE orders 
+                SET status = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
+            $stmt->execute([$newStatus, $orderId]);
+            
+            // If cancelling, restore stock quantities
+            if ($newStatus === 'cancelled') {
+                $stmt = $pdo->prepare("
+                    SELECT product_id, quantity 
+                    FROM order_items 
+                    WHERE order_id = ?
+                ");
+                $stmt->execute([$orderId]);
+                $items = $stmt->fetchAll();
+                
+                foreach ($items as $item) {
+                    $stmt = $pdo->prepare("
+                        UPDATE products 
+                        SET stock_quantity = stock_quantity + ? 
+                        WHERE id = ?
+                    ");
+                    $stmt->execute([$item['quantity'], $item['product_id']]);
+                }
+            }
+            
+            // Add status history
+            $notes = $newStatus === 'cancelled' ? 'Order cancelled by customer' : "Status updated to {$newStatus}";
+            $stmt = $pdo->prepare("
+                INSERT INTO order_status_history (order_id, status, notes, created_at)
+                VALUES (?, ?, ?, NOW())
+            ");
+            $stmt->execute([$orderId, $newStatus, $notes]);
+            
+            $pdo->commit();
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Order status updated successfully',
+                'order_number' => $order['order_number'],
+                'new_status' => $newStatus
+            ]);
+            
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to update order status: ' . $e->getMessage()]);
         }
         break;
         
