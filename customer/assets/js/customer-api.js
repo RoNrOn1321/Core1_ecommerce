@@ -220,6 +220,7 @@ const customerAPI = {
         }
     },
 
+
     // Support methods
     support: {
         async getChatRooms() {
@@ -401,6 +402,29 @@ const customerAPI = {
         }
     };
 })();
+
+// Add wishlist methods (workaround for parsing issue)
+customerAPI.wishlist = {
+    async getItems() {
+        return customerAPI.get('/wishlist.php');
+    },
+
+    async addItem(productId) {
+        return customerAPI.post('/wishlist.php/add', { product_id: productId });
+    },
+
+    async removeItem(wishlistId) {
+        return customerAPI.delete(`/wishlist.php/remove/${wishlistId}`);
+    },
+
+    async clear() {
+        return customerAPI.delete('/wishlist.php/clear');
+    },
+
+    async getCount() {
+        return customerAPI.get('/wishlist.php/count');
+    }
+};
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {

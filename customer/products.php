@@ -173,7 +173,7 @@
                 <div class="flex flex-col space-y-2">
                     <a href="account/dashboard.php" class="text-gray-300 hover:text-white transition-colors">My Account</a>
                     <a href="account/orders.php" class="text-gray-300 hover:text-white transition-colors">My Orders</a>
-                    <a href="account/wishlist.php" class="text-gray-300 hover:text-white transition-colors">My Wishlist</a>
+                    <a href="wishlist.php" class="text-gray-300 hover:text-white transition-colors">My Wishlist</a>
                 </div>
             </div>
 
@@ -213,6 +213,7 @@
         loadCategories();
         loadProducts(1);
         updateCartCount();
+        updateWishlistCount();
 
         // Event listeners
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -449,9 +450,68 @@
         }
     }
 
-    function addToWishlist(productId) {
-        // TODO: Implement wishlist functionality
-        showToast('Wishlist functionality coming soon!', 'info');
+    async function addToWishlist(productId) {
+        // Check if user is logged in
+        try {
+            const profileResponse = await customerAPI.auth.getProfile();
+            
+            if (!profileResponse.success) {
+                showToast('Please log in to add items to your wishlist', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                }, 1500);
+                return;
+            }
+        } catch (error) {
+            showToast('Please log in to add items to your wishlist', 'warning');
+            setTimeout(() => {
+                window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+            }, 1500);
+            return;
+        }
+
+        try {
+            let response;
+            
+            // Try main API first, fallback to direct fetch if needed
+            if (typeof customerAPI !== 'undefined' && customerAPI && customerAPI.wishlist) {
+                response = await customerAPI.wishlist.addItem(productId);
+            } else {
+                // Direct API call fallback
+                const apiResponse = await fetch('/Core1_ecommerce/customer/api/wishlist.php/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ product_id: productId })
+                });
+                response = await apiResponse.json();
+            }
+
+            if (response.success) {
+                showToast(response.message, 'success');
+                
+                // Update wishlist button appearance
+                const wishlistBtn = document.querySelector(`button[onclick="addToWishlist(${productId})"]`);
+                if (wishlistBtn) {
+                    wishlistBtn.innerHTML = '<i class="fas fa-heart"></i>';
+                    wishlistBtn.classList.remove('text-gray-400', 'hover:text-red-500');
+                    wishlistBtn.classList.add('text-red-500');
+                    wishlistBtn.setAttribute('title', 'Added to Wishlist');
+                    wishlistBtn.onclick = null; // Disable further clicks
+                }
+                
+                // Update navbar wishlist count
+                updateWishlistCount();
+            } else {
+                showToast(response.message, 'error');
+            }
+        } catch (error) {
+            showToast('Failed to add item to wishlist', 'error');
+            console.error('Error:', error);
+        }
     }
 
     function viewProduct(productId) {
@@ -470,6 +530,37 @@
             }
         } catch (error) {
             console.error('Failed to update cart count:', error);
+        }
+    }
+
+    async function updateWishlistCount() {
+        try {
+            let response;
+            
+            // Try main API first, fallback to direct fetch if needed
+            if (typeof customerAPI !== 'undefined' && customerAPI && customerAPI.wishlist) {
+                response = await customerAPI.wishlist.getCount();
+            } else {
+                // Direct API call fallback
+                const apiResponse = await fetch('/Core1_ecommerce/customer/api/wishlist.php/count', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+                response = await apiResponse.json();
+            }
+            
+            if (response.success) {
+                const wishlistCount = document.getElementById('wishlistCount');
+                if (wishlistCount) {
+                    wishlistCount.textContent = response.data.count;
+                }
+            }
+        } catch (error) {
+            // Silently fail - wishlist functionality is optional and user may not be logged in
         }
     }
     

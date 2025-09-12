@@ -322,6 +322,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         loadProduct();
         updateCartCount();
+        updateWishlistCount();
     });
 
     async function loadProduct() {
@@ -566,8 +567,77 @@
         }
     }
 
-    function addToWishlist() {
-        showToast('Wishlist functionality coming soon!', 'info');
+    async function addToWishlist() {
+        if (!productData) return;
+
+        const button = event.target;
+        const originalContent = button.innerHTML;
+        
+        // Check if user is logged in
+        try {
+            const profileResponse = await customerAPI.auth.getProfile();
+            
+            if (!profileResponse.success) {
+                showToast('Please log in to add items to your wishlist', 'warning');
+                setTimeout(() => {
+                    window.location.href = '../login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                }, 1500);
+                return;
+            }
+        } catch (error) {
+            showToast('Please log in to add items to your wishlist', 'warning');
+            setTimeout(() => {
+                window.location.href = '../login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+            }, 1500);
+            return;
+        }
+
+        // Disable button and show loading
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i> Adding...';
+
+        try {
+            let response;
+            
+            // Try main API first, fallback to direct fetch if needed
+            if (typeof customerAPI !== 'undefined' && customerAPI && customerAPI.wishlist) {
+                response = await customerAPI.wishlist.addItem(productData.id);
+            } else {
+                // Direct API call fallback
+                const apiResponse = await fetch('/Core1_ecommerce/customer/api/wishlist.php/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ product_id: productData.id })
+                });
+                response = await apiResponse.json();
+            }
+
+            if (response.success) {
+                showToast(response.message, 'success');
+                // Update button to show added state
+                button.innerHTML = '<i class="fas fa-heart mr-3"></i> Added to Wishlist';
+                button.classList.remove('hover:border-red-400', 'hover:text-red-500');
+                button.classList.add('border-red-400', 'text-red-500');
+                
+                // Update navbar wishlist count
+                updateWishlistCount();
+            } else {
+                showToast(response.message, 'error');
+            }
+        } catch (error) {
+            showToast('Failed to add item to wishlist', 'error');
+            console.error('Error:', error);
+        } finally {
+            // Reset button if failed
+            if (button.innerHTML.includes('Adding...')) {
+                button.innerHTML = originalContent;
+            }
+            button.disabled = false;
+        }
     }
 
     function viewSeller() {
@@ -609,6 +679,37 @@
             }
         } catch (error) {
             console.error('Failed to update cart count:', error);
+        }
+    }
+    
+    async function updateWishlistCount() {
+        try {
+            let response;
+            
+            // Try main API first, fallback to direct fetch if needed
+            if (typeof customerAPI !== 'undefined' && customerAPI && customerAPI.wishlist) {
+                response = await customerAPI.wishlist.getCount();
+            } else {
+                // Direct API call fallback
+                const apiResponse = await fetch('/Core1_ecommerce/customer/api/wishlist.php/count', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+                response = await apiResponse.json();
+            }
+            
+            if (response.success) {
+                const wishlistCount = document.getElementById('wishlistCount');
+                if (wishlistCount) {
+                    wishlistCount.textContent = response.data.count;
+                }
+            }
+        } catch (error) {
+            // Silently fail - wishlist functionality is optional and user may not be logged in
         }
     }
     

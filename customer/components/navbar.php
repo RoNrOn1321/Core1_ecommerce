@@ -77,10 +77,10 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
             <!-- Right side icons -->
             <div class="flex items-center space-x-4">
                 <!-- Wishlist -->
-                <button class="p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-red-50 transition-all relative">
+                <a href="<?php echo $basePath; ?>wishlist.php" class="p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-red-50 transition-all relative">
                     <i class="fas fa-heart text-xl"></i>
                     <span id="wishlistCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
-                </button>
+                </a>
 
                 <!-- Shopping Cart -->
                 <div class="relative">
@@ -106,8 +106,10 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
                                     <span class="font-semibold text-gray-900">Total:</span>
                                     <span class="font-bold text-xl text-amber-600">₱<span id="miniCartTotal">0.00</span></span>
                                 </div>
-                                <button id="miniCheckoutBtn" onclick="proceedToCheckout()" class="w-full bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors">
-                                    <i class="fas fa-shopping-cart mr-2"></i> Checkout
+                                <button id="miniCheckoutBtn" onclick="proceedToCheckout()" 
+                                        class="w-full bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors"
+                                        style="background-color: #d97706 !important; color: #ffffff !important; border: none !important; font-weight: 500 !important;">
+                                    <i class="fas fa-shopping-cart mr-2" style="color: #ffffff !important;"></i> Checkout
                                 </button>
                             </div>
                         </div>
@@ -276,6 +278,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize cart count
     updateCartCount();
     
+    // Initialize wishlist count
+    updateWishlistCount();
+    
     // Initialize profile image
     loadNavProfileImage();
     
@@ -406,6 +411,25 @@ async function updateCartCount() {
         }
     } catch (error) {
         console.error('Failed to update cart count:', error);
+    }
+}
+
+async function updateWishlistCount() {
+    try {
+        // Check if customerAPI is loaded
+        if (typeof customerAPI === 'undefined') {
+            console.warn('customerAPI not loaded yet, retrying...');
+            setTimeout(updateWishlistCount, 100);
+            return;
+        }
+        
+        const response = await customerAPI.wishlist.getCount();
+        if (response.success) {
+            document.getElementById('wishlistCount').textContent = response.data.count;
+        }
+    } catch (error) {
+        // Silently fail - wishlist functionality is optional and user may not be logged in
+        console.debug('Wishlist count update failed:', error.message);
     }
 }
 

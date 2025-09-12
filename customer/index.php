@@ -16,9 +16,9 @@
 </head>
 <body>
 
-<?php include 'components/navbar.php'; ?>
-
 <script src="assets/js/customer-api.js"></script>
+
+<?php include 'components/navbar.php'; ?>
 
 <!-- home section starts -->
 
