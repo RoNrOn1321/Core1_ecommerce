@@ -62,16 +62,26 @@ if (!$orderId || !$paymentIntentId) {
             </div>
 
             <div class="flex flex-col sm:flex-row gap-4">
-                <a href="account/orders.php" 
+                <a href="#" id="viewReceiptBtn"
                    class="flex-1 bg-amber-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-amber-700 transition-colors">
-                    <i class="fas fa-list mr-2"></i>
-                    View My Orders
+                    <i class="fas fa-receipt mr-2"></i>
+                    View Receipt
                 </a>
                 <a href="products.php" 
                    class="flex-1 bg-gray-200 text-gray-800 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
                     <i class="fas fa-shopping-bag mr-2"></i>
                     Continue Shopping
                 </a>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    Redirecting to receipt in <span id="countdown">5</span> seconds...
+                </p>
+                <button onclick="cancelAutoRedirect()" class="text-sm text-amber-600 hover:text-amber-700 underline mt-2">
+                    Cancel auto-redirect
+                </button>
             </div>
         </div>
 
@@ -161,6 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('orderNumber').textContent = data.order_number;
         document.getElementById('amountPaid').textContent = data.amount.toFixed(2);
         
+        // Set up receipt button
+        const receiptBtn = document.getElementById('viewReceiptBtn');
+        receiptBtn.href = `receipt.php?order=${data.order_id}`;
+        
         // Update page title
         document.title = 'Payment Successful - Core1 E-commerce';
     }
@@ -181,13 +195,62 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 
-// Auto-redirect to orders page after successful payment (after 10 seconds)
-setTimeout(function() {
-    const successCard = document.getElementById('successCard');
-    if (successCard.style.display !== 'none') {
-        window.location.href = 'account/orders.php';
+// Auto-redirect to receipt page after successful payment with countdown
+let autoRedirectTimer;
+let countdownTimer;
+let countdownValue = 5;
+
+function startAutoRedirect(orderId) {
+    // Show countdown
+    const countdownElement = document.getElementById('countdown');
+    countdownValue = 5;
+    
+    countdownTimer = setInterval(function() {
+        countdownValue--;
+        if (countdownElement) {
+            countdownElement.textContent = countdownValue;
+        }
+        
+        if (countdownValue <= 0) {
+            clearInterval(countdownTimer);
+            clearTimeout(autoRedirectTimer);
+            window.location.href = `receipt.php?order=${orderId}`;
+        }
+    }, 1000);
+    
+    // Backup timer in case countdown fails
+    autoRedirectTimer = setTimeout(function() {
+        window.location.href = `receipt.php?order=${orderId}`;
+    }, 5000);
+}
+
+function cancelAutoRedirect() {
+    if (autoRedirectTimer) {
+        clearTimeout(autoRedirectTimer);
     }
-}, 10000);
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+    }
+    
+    // Hide countdown
+    const countdownContainer = document.querySelector('.mt-6.text-center');
+    if (countdownContainer) {
+        countdownContainer.style.display = 'none';
+    }
+}
+
+// Update the success function to start auto-redirect
+document.addEventListener('DOMContentLoaded', function() {
+    // Store original showSuccess function
+    const originalShowSuccess = window.showSuccess;
+    window.showSuccess = function(data) {
+        originalShowSuccess(data);
+        startAutoRedirect(data.order_id);
+    };
+    
+    // Make cancelAutoRedirect available globally
+    window.cancelAutoRedirect = cancelAutoRedirect;
+});
 </script>
 
 </body>

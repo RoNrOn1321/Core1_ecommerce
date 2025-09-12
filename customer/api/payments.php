@@ -83,9 +83,6 @@ switch ($action) {
             }
             
             // Create PayMongo payment intent
-            $baseUrl = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-            $baseUrl .= '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
-            
             $paymentIntentResponse = $payMongo->createPaymentIntent($amount, 'PHP', ['gcash']);
             
             if (!$paymentIntentResponse['success']) {
@@ -101,8 +98,10 @@ switch ($action) {
             $paymentIntent = $paymentIntentResponse['data']['data'];
             $paymentIntentId = $paymentIntent['id'];
             
-            // Create GCash payment method
-            $returnUrl = $baseUrl . '/payment-success.php?order_id=' . $orderId . '&payment_intent_id=' . $paymentIntentId;
+            // Create correct return URL (use redirect handler to clean up PayMongo parameters)
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'];
+            $returnUrl = $protocol . '://' . $host . '/Core1_ecommerce/customer/payment-redirect.php?order_id=' . $orderId . '&payment_intent_id=' . $paymentIntentId;
             
             $paymentMethodResponse = $payMongo->createGCashPaymentMethod($returnUrl);
             
