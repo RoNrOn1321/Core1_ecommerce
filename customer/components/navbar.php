@@ -320,11 +320,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     notificationIcon?.addEventListener('click', function(e) {
         e.stopPropagation();
-        if (notificationDropdown.classList.contains('opacity-0')) {
+        if (notificationDropdown && notificationDropdown.classList.contains('opacity-0')) {
             notificationDropdown.classList.remove('opacity-0', 'invisible', 'translate-y-2');
             notificationDropdown.classList.add('opacity-100', 'visible', 'translate-y-0');
             loadNotifications();
-        } else {
+        } else if (notificationDropdown) {
             notificationDropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
             notificationDropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
         }
@@ -653,9 +653,13 @@ async function updateNotificationCount() {
             if (notificationCount) {
                 if (totalCount > 0) {
                     notificationCount.textContent = totalCount > 99 ? '99+' : totalCount;
-                    notificationCount.style.display = 'flex';
+                    if (notificationCount.style) {
+                        notificationCount.style.display = 'flex';
+                    }
                 } else {
-                    notificationCount.style.display = 'none';
+                    if (notificationCount.style) {
+                        notificationCount.style.display = 'none';
+                    }
                 }
             }
             
@@ -703,6 +707,7 @@ async function loadNotifications() {
     const notificationsList = document.getElementById('notificationsList');
     
     if (!notificationsList) return;
+    if (!notificationsLoading) return;
     
     notificationsLoading.style.display = 'block';
     
@@ -723,12 +728,16 @@ async function loadNotifications() {
         console.error('Failed to load notifications:', error);
         notificationsList.innerHTML = '<div class="text-center py-6 text-red-500">Failed to load notifications</div>';
     } finally {
-        notificationsLoading.style.display = 'none';
+        if (notificationsLoading) {
+            notificationsLoading.style.display = 'none';
+        }
     }
 }
 
 function renderNotifications(notifications) {
     const notificationsList = document.getElementById('notificationsList');
+    
+    if (!notificationsList) return;
     
     if (!notifications || notifications.length === 0) {
         notificationsList.innerHTML = '<div class="text-center py-6 text-gray-500">No new notifications</div>';
