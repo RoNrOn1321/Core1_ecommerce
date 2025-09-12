@@ -248,6 +248,13 @@ document.addEventListener('DOMContentLoaded', function() {
     checkAuthenticationAndLoadTicket();
     setupEventListeners();
     startRealTimeUpdates();
+    
+    // Check for notifications immediately when page loads
+    if (typeof updateNotificationCount === 'function') {
+        setTimeout(() => {
+            updateNotificationCount();
+        }, 1000); // Wait 1 second for API to be ready
+    }
 });
 
 async function checkAuthenticationAndLoadTicket() {
@@ -651,20 +658,31 @@ function showToast(message, type = 'success') {
 
 // Real-time updates
 let pollingInterval;
+let notificationPollingInterval;
 let lastMessageCount = 0;
 
 function startRealTimeUpdates() {
-    // Poll every 10 seconds for new messages
+    // Poll every 5 seconds for new messages (more frequent for real-time feel)
     pollingInterval = setInterval(async () => {
         if (ticketId && currentTicket && currentTicket.status !== 'closed') {
             await checkForNewMessages();
         }
-    }, 10000);
+    }, 5000);
+    
+    // Poll every 15 seconds for notification updates (less frequent than message updates)
+    notificationPollingInterval = setInterval(async () => {
+        if (typeof updateNotificationCount === 'function') {
+            updateNotificationCount();
+        }
+    }, 15000);
 }
 
 function stopRealTimeUpdates() {
     if (pollingInterval) {
         clearInterval(pollingInterval);
+    }
+    if (notificationPollingInterval) {
+        clearInterval(notificationPollingInterval);
     }
 }
 
@@ -687,6 +705,9 @@ async function checkForNewMessages() {
                 if (agentReplies.length > 0) {
                     showToast(`You received ${agentReplies.length} new ${agentReplies.length === 1 ? 'reply' : 'replies'} from support!`, 'info');
                     
+                    // Mark notifications as read since user is viewing the ticket
+                    await markTicketAsViewed(ticketId);
+                    
                     // Play a subtle notification sound (optional)
                     if ('Notification' in window && Notification.permission === 'granted') {
                         new Notification('Support Reply Received', {
@@ -706,12 +727,15 @@ async function checkForNewMessages() {
 
 async function markTicketAsViewed(ticketId) {
     try {
-        // Update the customer_last_seen timestamp
+        // Mark support notifications as read in the new unified system
+        await customerAPI.notifications.markAllAsRead(['support']);
+        
+        // Also update the old support system for backward compatibility
         await customerAPI.post('/support/notifications/mark-read');
         
-        // Update notification count in navbar
+        // Update notification count in navbar immediately
         if (typeof updateNotificationCount === 'function') {
-            updateNotificationCount();
+            await updateNotificationCount();
         }
     } catch (error) {
         console.debug('Failed to mark ticket as viewed:', error);

@@ -208,6 +208,25 @@ function sendTicketReply($pdo, $customerId, $ticketId, $data) {
         $stmt->execute([$messageId]);
         $messageData = $stmt->fetch();
         
+        // Create notification for customer reply (update existing notification system)
+        try {
+            require_once __DIR__ . '/../../includes/NotificationHelper.php';
+            $notificationHelper = new NotificationHelper($pdo);
+            
+            // Get ticket details for notification
+            $ticketStmt = $pdo->prepare("SELECT ticket_number FROM support_tickets WHERE id = ?");
+            $ticketStmt->execute([$ticketId]);
+            $ticketData = $ticketStmt->fetch();
+            
+            if ($ticketData) {
+                // This is a customer reply, so we don't send notification to the customer
+                // Notifications for customer replies would be sent to agents (not implemented in this scope)
+            }
+        } catch (Exception $e) {
+            // Log error but don't fail the reply
+            error_log("Failed to create notification for support reply: " . $e->getMessage());
+        }
+        
         echo json_encode([
             'success' => true,
             'message' => 'Reply sent successfully',

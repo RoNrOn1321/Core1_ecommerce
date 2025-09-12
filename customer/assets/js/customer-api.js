@@ -264,6 +264,78 @@ const customerAPI = {
         }
     },
 
+    // Universal Notifications API
+    notifications: {
+        async getUnread(types = null, limit = 20) {
+            const params = { limit };
+            if (types) params.types = Array.isArray(types) ? types.join(',') : types;
+            return customerAPI.get('/notifications/unread', params);
+        },
+
+        async getAll(options = {}) {
+            const params = {
+                limit: options.limit || 50,
+                offset: options.offset || 0,
+                include_read: options.includeRead || false
+            };
+            if (options.type) params.type = options.type;
+            return customerAPI.get('/notifications/all', params);
+        },
+
+        async getCount() {
+            return customerAPI.get('/notifications/count');
+        },
+
+        async markAsRead(notificationId) {
+            return customerAPI.post(`/notifications/mark-read/${notificationId}`);
+        },
+
+        async markAllAsRead(types = null) {
+            const data = {};
+            if (types) data.types = types;
+            return customerAPI.post('/notifications/mark-read', data);
+        },
+
+        async markAsUnread(notificationId) {
+            return customerAPI.post(`/notifications/mark-unread/${notificationId}`);
+        },
+
+        async archive(notificationIds) {
+            return customerAPI.post('/notifications/archive', {
+                notification_ids: Array.isArray(notificationIds) ? notificationIds : [notificationIds]
+            });
+        },
+
+        async delete(notificationId) {
+            return customerAPI.delete(`/notifications/${notificationId}`);
+        },
+
+        // Filtered getters for specific types
+        async getOrderNotifications() {
+            return this.getAll({ type: 'order' });
+        },
+
+        async getSupportNotifications() {
+            return this.getAll({ type: 'support' });
+        },
+
+        async getProductNotifications() {
+            return this.getAll({ type: 'product' });
+        },
+
+        async getPromotionNotifications() {
+            return this.getAll({ type: 'promotion' });
+        },
+
+        async getPaymentNotifications() {
+            return this.getAll({ type: 'payment' });
+        },
+
+        async getShippingNotifications() {
+            return this.getAll({ type: 'shipping' });
+        }
+    },
+
     // Utility methods
     utils: {
         // Format currency

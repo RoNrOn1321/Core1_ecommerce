@@ -85,24 +85,41 @@ if ($currentDir === 'products' || $currentDir === 'account' || $currentDir === '
                     </button>
 
                     <!-- Notifications Dropdown -->
-                    <div id="notificationDropdown" class="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible transition-all transform translate-y-2 z-50">
+                    <div id="notificationDropdown" class="absolute top-full right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible transition-all transform translate-y-2 z-50">
                         <div class="p-4">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="font-semibold text-lg text-gray-900">Support Updates</h3>
+                                <h3 class="font-semibold text-lg text-gray-900">Notifications</h3>
                                 <button id="markAllReadBtn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
                                     Mark All Read
                                 </button>
                             </div>
-                            <div id="notificationsList" class="max-h-64 overflow-y-auto mb-4">
+                            
+                            <!-- Notification Filter Tabs -->
+                            <div id="notificationTabs" class="flex space-x-1 mb-4 bg-gray-100 rounded-lg p-1">
+                                <button class="notification-tab active flex-1 text-xs py-2 px-3 rounded-md font-medium transition-colors" data-type="all">
+                                    All <span id="tab-count-all" class="ml-1 bg-blue-500 text-white px-2 py-0.5 rounded-full text-xs">0</span>
+                                </button>
+                                <button class="notification-tab flex-1 text-xs py-2 px-3 rounded-md font-medium transition-colors" data-type="order">
+                                    Orders <span id="tab-count-order" class="ml-1 bg-gray-400 text-white px-2 py-0.5 rounded-full text-xs">0</span>
+                                </button>
+                                <button class="notification-tab flex-1 text-xs py-2 px-3 rounded-md font-medium transition-colors" data-type="support">
+                                    Support <span id="tab-count-support" class="ml-1 bg-gray-400 text-white px-2 py-0.5 rounded-full text-xs">0</span>
+                                </button>
+                                <button class="notification-tab flex-1 text-xs py-2 px-3 rounded-md font-medium transition-colors" data-type="promotion">
+                                    Deals <span id="tab-count-promotion" class="ml-1 bg-gray-400 text-white px-2 py-0.5 rounded-full text-xs">0</span>
+                                </button>
+                            </div>
+                            
+                            <div id="notificationsList" class="max-h-80 overflow-y-auto mb-4">
                                 <!-- Notifications will be loaded here -->
-                                <div id="notificationsLoading" class="text-center py-4">
+                                <div id="notificationsLoading" class="text-center py-6">
                                     <i class="fas fa-spinner fa-spin text-gray-400 mb-2"></i>
                                     <p class="text-sm text-gray-500">Loading notifications...</p>
                                 </div>
                             </div>
                             <div class="border-t pt-4">
-                                <a href="<?php echo $basePath; ?>support/my-tickets.php" class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                    <i class="fas fa-list mr-2"></i> View All Tickets
+                                <a href="<?php echo $basePath; ?>account/notifications.php" class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                    <i class="fas fa-bell mr-2"></i> View All Notifications
                                 </a>
                             </div>
                         </div>
@@ -315,6 +332,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     markAllReadBtn?.addEventListener('click', function() {
         markAllNotificationsAsRead();
+    });
+
+    // Notification tab switching
+    const notificationTabs = document.querySelectorAll('.notification-tab');
+    notificationTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const type = this.dataset.type;
+            switchNotificationTab(type);
+        });
     });
 
     // Close dropdowns when clicking outside
@@ -604,8 +630,10 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// Notification functions
+// Comprehensive Notification System
 let notificationPollingInterval;
+let currentNotificationTab = 'all';
+let notificationCounts = {};
 
 async function updateNotificationCount() {
     try {
@@ -615,24 +643,59 @@ async function updateNotificationCount() {
             return;
         }
         
-        const response = await customerAPI.support.getUnreadNotifications();
+        const response = await customerAPI.notifications.getCount();
         if (response.success && response.data) {
-            const count = response.data.total_unread_messages || 0;
-            const notificationCount = document.getElementById('notificationCount');
+            const data = response.data;
+            const totalCount = parseInt(data.total_unread) || 0;
             
+            // Update main notification badge
+            const notificationCount = document.getElementById('notificationCount');
             if (notificationCount) {
-                if (count > 0) {
-                    notificationCount.textContent = count > 99 ? '99+' : count;
+                if (totalCount > 0) {
+                    notificationCount.textContent = totalCount > 99 ? '99+' : totalCount;
                     notificationCount.style.display = 'flex';
                 } else {
                     notificationCount.style.display = 'none';
                 }
             }
+            
+            // Update tab counts
+            notificationCounts = {
+                all: totalCount,
+                order: parseInt(data.order_count) || 0,
+                support: parseInt(data.support_count) || 0,
+                promotion: parseInt(data.promotion_count) || 0,
+                product: parseInt(data.product_count) || 0,
+                payment: parseInt(data.payment_count) || 0,
+                shipping: parseInt(data.shipping_count) || 0,
+                system: parseInt(data.system_count) || 0,
+                account: parseInt(data.account_count) || 0
+            };
+            
+            updateTabCounts();
         }
     } catch (error) {
         // Silently fail - user may not be logged in
         console.debug('Notification count update failed:', error.message);
     }
+}
+
+function updateTabCounts() {
+    // Update individual tab counts
+    Object.keys(notificationCounts).forEach(type => {
+        const countElement = document.getElementById(`tab-count-${type}`);
+        if (countElement) {
+            const count = notificationCounts[type];
+            countElement.textContent = count > 99 ? '99+' : count;
+            
+            // Update background color based on count
+            if (count > 0) {
+                countElement.className = countElement.className.replace(/bg-gray-400/, 'bg-blue-500');
+            } else {
+                countElement.className = countElement.className.replace(/bg-blue-500/, 'bg-gray-400');
+            }
+        }
+    });
 }
 
 async function loadNotifications() {
@@ -644,15 +707,21 @@ async function loadNotifications() {
     notificationsLoading.style.display = 'block';
     
     try {
-        const response = await customerAPI.support.getUnreadNotifications();
-        if (response.success && response.data) {
-            renderNotifications(response.data.tickets);
+        let response;
+        if (currentNotificationTab === 'all') {
+            response = await customerAPI.notifications.getUnread(null, 15);
         } else {
-            notificationsList.innerHTML = '<div class="text-center py-4 text-gray-500">No new notifications</div>';
+            response = await customerAPI.notifications.getUnread([currentNotificationTab], 15);
+        }
+        
+        if (response.success && response.data) {
+            renderNotifications(response.data.notifications);
+        } else {
+            notificationsList.innerHTML = '<div class="text-center py-6 text-gray-500">No new notifications</div>';
         }
     } catch (error) {
         console.error('Failed to load notifications:', error);
-        notificationsList.innerHTML = '<div class="text-center py-4 text-red-500">Failed to load notifications</div>';
+        notificationsList.innerHTML = '<div class="text-center py-6 text-red-500">Failed to load notifications</div>';
     } finally {
         notificationsLoading.style.display = 'none';
     }
@@ -662,36 +731,38 @@ function renderNotifications(notifications) {
     const notificationsList = document.getElementById('notificationsList');
     
     if (!notifications || notifications.length === 0) {
-        notificationsList.innerHTML = '<div class="text-center py-4 text-gray-500">No new notifications</div>';
+        notificationsList.innerHTML = '<div class="text-center py-6 text-gray-500">No new notifications</div>';
         return;
     }
 
     const notificationsHTML = notifications.map(notification => {
-        const statusClass = getNotificationStatusClass(notification.status);
+        const typeClass = getNotificationTypeClass(notification.type);
         const priorityClass = getNotificationPriorityClass(notification.priority);
-        const timeAgo = getTimeAgo(notification.last_reply_at);
+        const timeAgo = getTimeAgo(notification.created_at);
+        const icon = getNotificationIcon(notification.type);
         
         return `
             <div class="border-b border-gray-100 last:border-b-0 py-3">
-                <a href="<?php echo $basePath; ?>support/ticket-detail.php?id=${notification.ticket_id}" class="block hover:bg-gray-50 -m-2 p-2 rounded">
+                <div class="block hover:bg-gray-50 -m-2 p-2 rounded cursor-pointer" onclick="handleNotificationClick('${notification.id}', '${notification.action_url || ''}')">
                     <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0">
-                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 ${typeClass} rounded-full flex items-center justify-center">
+                                <i class="${icon} text-white text-sm"></i>
+                            </div>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center space-x-2 mb-1">
-                                <p class="text-sm font-medium text-gray-900 truncate">#${notification.ticket_number}</p>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${notification.status.replace('_', ' ')}</span>
+                            <div class="flex items-center justify-between mb-1">
+                                <p class="text-sm font-semibold text-gray-900 truncate">${notification.title}</p>
+                                <span class="text-xs text-gray-500 flex-shrink-0 ml-2">${timeAgo}</span>
                             </div>
-                            <p class="text-sm text-gray-900 font-medium mb-1 line-clamp-2">${notification.subject}</p>
-                            ${notification.preview ? `<p class="text-xs text-gray-600 line-clamp-2">${notification.preview}</p>` : ''}
-                            <div class="flex items-center justify-between mt-2">
-                                <span class="text-xs text-gray-500">${timeAgo}</span>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full ${priorityClass}">${notification.priority}</span>
+                            <p class="text-sm text-gray-700 mb-2 line-clamp-2">${notification.message}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${typeClass} bg-opacity-20">${notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}</span>
+                                ${notification.priority !== 'medium' ? `<span class="px-2 py-1 text-xs font-medium rounded-full ${priorityClass}">${notification.priority}</span>` : ''}
                             </div>
                         </div>
                     </div>
-                </a>
+                </div>
             </div>
         `;
     }).join('');
@@ -701,7 +772,12 @@ function renderNotifications(notifications) {
 
 async function markAllNotificationsAsRead() {
     try {
-        const response = await customerAPI.post('/support/notifications/mark-read');
+        let types = null;
+        if (currentNotificationTab !== 'all') {
+            types = [currentNotificationTab];
+        }
+        
+        const response = await customerAPI.notifications.markAllAsRead(types);
         if (response.success) {
             showToast('All notifications marked as read', 'success');
             updateNotificationCount();
@@ -718,12 +794,55 @@ async function markAllNotificationsAsRead() {
     }
 }
 
+function switchNotificationTab(type) {
+    currentNotificationTab = type;
+    
+    // Update tab visual states
+    const tabs = document.querySelectorAll('.notification-tab');
+    tabs.forEach(tab => {
+        if (tab.dataset.type === type) {
+            tab.classList.add('active', 'bg-blue-100', 'text-blue-700');
+            tab.classList.remove('text-gray-600', 'hover:bg-gray-50');
+        } else {
+            tab.classList.remove('active', 'bg-blue-100', 'text-blue-700');
+            tab.classList.add('text-gray-600', 'hover:bg-gray-50');
+        }
+    });
+    
+    // Reload notifications for selected type
+    loadNotifications();
+}
+
+async function handleNotificationClick(notificationId, actionUrl) {
+    try {
+        // Mark as read
+        await customerAPI.notifications.markAsRead(notificationId);
+        
+        // Update counts
+        updateNotificationCount();
+        
+        // Navigate if there's an action URL
+        if (actionUrl) {
+            window.location.href = actionUrl;
+        } else {
+            // Reload notifications to reflect read status
+            loadNotifications();
+        }
+    } catch (error) {
+        console.error('Failed to handle notification click:', error);
+        // Still navigate even if marking as read fails
+        if (actionUrl) {
+            window.location.href = actionUrl;
+        }
+    }
+}
+
 function startNotificationPolling() {
     // Update immediately
     updateNotificationCount();
     
-    // Then update every 30 seconds
-    notificationPollingInterval = setInterval(updateNotificationCount, 30000);
+    // Then update every 20 seconds (reduced from 30 for better responsiveness)
+    notificationPollingInterval = setInterval(updateNotificationCount, 20000);
 }
 
 function stopNotificationPolling() {
@@ -732,15 +851,32 @@ function stopNotificationPolling() {
     }
 }
 
-function getNotificationStatusClass(status) {
-    const statusClasses = {
-        'open': 'bg-red-100 text-red-800',
-        'in_progress': 'bg-yellow-100 text-yellow-800',
-        'waiting_customer': 'bg-blue-100 text-blue-800',
-        'resolved': 'bg-green-100 text-green-800',
-        'closed': 'bg-gray-100 text-gray-800'
+function getNotificationTypeClass(type) {
+    const typeClasses = {
+        'order': 'bg-blue-500',
+        'support': 'bg-purple-500', 
+        'product': 'bg-green-500',
+        'promotion': 'bg-yellow-500',
+        'payment': 'bg-indigo-500',
+        'shipping': 'bg-orange-500',
+        'system': 'bg-gray-500',
+        'account': 'bg-pink-500'
     };
-    return statusClasses[status] || 'bg-gray-100 text-gray-800';
+    return typeClasses[type] || 'bg-gray-500';
+}
+
+function getNotificationIcon(type) {
+    const typeIcons = {
+        'order': 'fas fa-shopping-bag',
+        'support': 'fas fa-headset',
+        'product': 'fas fa-box',
+        'promotion': 'fas fa-tag',
+        'payment': 'fas fa-credit-card',
+        'shipping': 'fas fa-truck',
+        'system': 'fas fa-cog',
+        'account': 'fas fa-user'
+    };
+    return typeIcons[type] || 'fas fa-bell';
 }
 
 function getNotificationPriorityClass(priority) {
