@@ -158,6 +158,43 @@ switch ($action) {
         }
         break;
         
+    case 'categories':
+        if ($requestMethod !== 'GET') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            break;
+        }
+        
+        try {
+            $stmt = $pdo->prepare("
+                SELECT 
+                    c.id, c.name, c.slug, c.description, c.parent_id, c.image, c.sort_order,
+                    COUNT(p.id) as product_count
+                FROM categories c
+                LEFT JOIN products p ON c.id = p.category_id AND p.status = 'published'
+                WHERE c.is_active = 1 
+                GROUP BY c.id, c.name, c.slug, c.description, c.parent_id, c.image, c.sort_order
+                ORDER BY c.parent_id, c.sort_order, c.name
+            ");
+            $stmt->execute();
+            $categories = $stmt->fetchAll();
+            
+            // Convert product_count to integer
+            foreach ($categories as &$category) {
+                $category['product_count'] = intval($category['product_count']);
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $categories
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to fetch categories: ' . $e->getMessage()]);
+        }
+        break;
+        
     default:
         // Check if action is a numeric product ID
         if (is_numeric($action)) {

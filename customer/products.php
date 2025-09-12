@@ -1,3 +1,9 @@
+<?php
+// Start session before any output
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,15 +40,148 @@
             background-clip: text;
         }
         
+        .search-section {
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+        
         .search-container {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            padding: 2px;
+            position: relative;
+            background: #fff;
+            border-radius: 5rem;
+            padding: .5rem;
+            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1);
+            border: .1rem solid rgba(0, 0, 0, .1);
+            transition: all .2s linear;
+        }
+        
+        .search-container:hover {
+            box-shadow: 0 .8rem 1.5rem rgba(0, 0, 0, .15);
+            transform: translateY(-.2rem);
         }
         
         .search-inner {
-            background: white;
-            border-radius: 18px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            padding-right: 7rem;
+            font-size: 1.6rem;
+            color: #333;
+            background: transparent;
+            border: none;
+            outline: none;
+            border-radius: 5rem;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+        
+        .search-input::placeholder {
+            color: #999;
+            text-transform: none;
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--beige);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 4.5rem;
+            height: 4.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all .2s linear;
+            font-size: 1.8rem;
+        }
+        
+        .search-icon:hover {
+            background: #333;
+            transform: translateY(-50%) scale(1.05);
+        }
+        
+        .filter-section {
+            background: #fff;
+            border-radius: .5rem;
+            padding: 2rem;
+            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1);
+            border: .1rem solid rgba(0, 0, 0, .1);
+            margin-top: 2rem;
+        }
+        
+        .filter-input, .filter-select {
+            padding: 1.2rem 1.5rem;
+            font-size: 1.5rem;
+            color: #333;
+            background: #fff;
+            border: .1rem solid rgba(0, 0, 0, .1);
+            border-radius: .5rem;
+            outline: none;
+            transition: all .2s linear;
+            width: 100%;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+        
+        .filter-input:focus, .filter-select:focus {
+            border-color: var(--beige);
+            box-shadow: 0 0 0 .2rem rgba(180, 141, 107, .1);
+        }
+        
+        .search-button {
+            background: #333;
+            color: #fff;
+            padding: 1.2rem 3rem;
+            border-radius: 5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all .2s linear;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+        
+        .search-button:hover {
+            background: var(--beige);
+            transform: translateY(-.2rem);
+        }
+        
+        .filter-label {
+            display: block;
+            font-size: 1.4rem;
+            color: #333;
+            margin-bottom: .8rem;
+            font-weight: bold;
+        }
+        
+        .filter-label i {
+            color: var(--beige);
+            margin-right: .5rem;
+        }
+        
+        .search-title {
+            text-align: center;
+            font-size: 3rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .search-title span {
+            color: var(--beige);
+        }
+        
+        .search-subtitle {
+            text-align: center;
+            font-size: 1.4rem;
+            color: #999;
+            margin-bottom: 2rem;
         }
         
         .category-badge {
@@ -82,60 +221,73 @@
         <p class="text-xl text-gray-600 max-w-2xl mx-auto">Discover our curated collection of premium products, carefully selected for quality and style.</p>
     </div>
 
-    <!-- Search and Filters -->
-    <div class="bg-white p-6 rounded-xl shadow-sm mb-8">
-        <div class="flex flex-wrap gap-4 items-end">
-            <!-- Search -->
-            <div class="flex-1 min-w-64">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
-                <div class="search-container">
-                    <div class="search-inner">
-                        <div class="relative">
-                            <input type="text" id="searchInput" placeholder="Search for amazing products..." 
-                                   class="w-full px-5 py-4 pr-12 border-0 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-lg" />
-                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <i class="fas fa-search text-xl"></i>
-                            </div>
-                        </div>
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-title">find your perfect <span>product</span></div>
+        <div class="search-subtitle">discover amazing products from trusted sellers</div>
+        
+        <!-- Main Search Bar -->
+        <div class="search-container" style="max-width: 60rem; margin: 0 auto 2rem auto;">
+            <div class="search-inner">
+                <input type="text" id="searchInput" placeholder="search for amazing products, brands, categories..." 
+                       class="search-input" />
+                <button class="search-icon" onclick="loadProducts(1)">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filter-section">
+            <div style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: end; justify-content: center;">
+                <!-- Category Filter -->
+                <div style="min-width: 20rem; flex: 1;">
+                    <label for="categoryFilter" class="filter-label">
+                        <i class="fas fa-tags"></i>
+                        category
+                    </label>
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">all categories</option>
+                    </select>
+                </div>
+    
+                <!-- Price Range -->
+                <div style="min-width: 25rem; flex: 1;">
+                    <label class="filter-label">
+                        <i class="fas fa-dollar-sign"></i>
+                        price range
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="number" id="minPrice" placeholder="min" min="0" step="0.01"
+                               class="filter-input" style="width: 8rem; text-align: center;" />
+                        <span style="color: #999; font-size: 1.4rem;">to</span>
+                        <input type="number" id="maxPrice" placeholder="max" min="0" step="0.01"
+                               class="filter-input" style="width: 8rem; text-align: center;" />
                     </div>
                 </div>
-            </div>
-            
-            <!-- Category Filter -->
-            <div class="min-w-48">
-                <label for="categoryFilter" class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select id="categoryFilter" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none bg-white">
-                    <option value="">All Categories</option>
-                </select>
-            </div>
-
-            <!-- Price Range -->
-            <div class="min-w-56">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
-                <div class="flex items-center gap-2">
-                    <input type="number" id="minPrice" placeholder="Min" min="0" step="0.01"
-                           class="w-20 px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none" />
-                    <span class="text-gray-500">to</span>
-                    <input type="number" id="maxPrice" placeholder="Max" min="0" step="0.01"
-                           class="w-20 px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none" />
+    
+                <!-- Sort By -->
+                <div style="min-width: 18rem; flex: 1;">
+                    <label for="sortBy" class="filter-label">
+                        <i class="fas fa-sort"></i>
+                        sort by
+                    </label>
+                    <select id="sortBy" class="filter-select">
+                        <option value="created_at">newest first</option>
+                        <option value="name">name a-z</option>
+                        <option value="price">price low-high</option>
+                        <option value="price_desc">price high-low</option>
+                    </select>
+                </div>
+    
+                <!-- Search Button -->
+                <div style="display: flex; align-items: end;">
+                    <button onclick="loadProducts(1)" class="search-button">
+                        <i class="fas fa-search" style="margin-right: .8rem;"></i>
+                        search
+                    </button>
                 </div>
             </div>
-
-            <!-- Sort By -->
-            <div class="min-w-44">
-                <label for="sortBy" class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select id="sortBy" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none bg-white">
-                    <option value="created_at">Newest First</option>
-                    <option value="name">Name A-Z</option>
-                    <option value="price">Price Low-High</option>
-                    <option value="price_desc">Price High-Low</option>
-                </select>
-            </div>
-
-            <!-- Search Button -->
-            <button onclick="loadProducts(1)" class="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 outline-none">
-                <i class="fas fa-search mr-2"></i> Search
-            </button>
         </div>
     </div>
 
@@ -155,52 +307,42 @@
 </section>
 
 <!-- footer section starts -->
-<footer class="bg-gray-900 text-white py-12 mt-16">
-    <div class="container mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div>
-                <h3 class="text-xl font-bold mb-4">Quick Links</h3>
-                <div class="flex flex-col space-y-2">
-                    <a href="index.php" class="text-gray-300 hover:text-white transition-colors">Home</a>
-                    <a href="index.php#about" class="text-gray-300 hover:text-white transition-colors">About</a>
-                    <a href="products/index.php" class="text-gray-300 hover:text-white transition-colors">Products</a>
-                    <a href="index.php#contact" class="text-gray-300 hover:text-white transition-colors">Contact</a>
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-xl font-bold mb-4">Account</h3>
-                <div class="flex flex-col space-y-2">
-                    <a href="account/dashboard.php" class="text-gray-300 hover:text-white transition-colors">My Account</a>
-                    <a href="account/orders.php" class="text-gray-300 hover:text-white transition-colors">My Orders</a>
-                    <a href="wishlist.php" class="text-gray-300 hover:text-white transition-colors">My Wishlist</a>
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-xl font-bold mb-4">Support</h3>
-                <div class="flex flex-col space-y-2">
-                    <a href="support/index.php" class="text-gray-300 hover:text-white transition-colors">Help Center</a>
-                    <a href="support/chat.php" class="text-gray-300 hover:text-white transition-colors">Live Chat</a>
-                    <a href="support/tickets.php" class="text-gray-300 hover:text-white transition-colors">Support Tickets</a>
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-xl font-bold mb-4">Contact Info</h3>
-                <div class="flex flex-col space-y-2 text-gray-300">
-                    <span><i class="fas fa-phone mr-2"></i>+639-123-45678</span>
-                    <span><i class="fas fa-envelope mr-2"></i>support@luminoecommerce.com</span>
-                    <span><i class="fas fa-map-marker-alt mr-2"></i>Manila, Philippines</span>
-                </div>
-            </div>
+<section class="footer">
+    <div class="box-container">
+        <div class="box">
+            <h3>quick links</h3>
+            <a href="index.php">home</a>
+            <a href="index.php#about">about</a>
+            <a href="products.php">products</a>
+            <a href="index.php#contact">contact</a>
         </div>
 
-        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
-            <p class="text-gray-400"> Created By <span class="text-amber-600 font-semibold">Lumino Team</span> | All rights reserved © 2024</p>
+        <div class="box">
+            <h3>account</h3>
+            <a href="account/dashboard.php">my account</a>
+            <a href="account/orders.php">my orders</a>
+            <a href="wishlist.php">my wishlist</a>
+            <a href="cart.php">my cart</a>
+        </div>
+
+        <div class="box">
+            <h3>support</h3>
+            <a href="support/index.php">help center</a>
+            <a href="support/chat.php">live chat</a>
+            <a href="support/tickets.php">support tickets</a>
+            <a href="#faq">faq</a>
+        </div>
+
+        <div class="box">
+            <h3>contact info</h3>
+            <a href="#"><i class="fas fa-phone"></i> +639-123-45678</a>
+            <a href="#"><i class="fas fa-envelope"></i> support@luminoecommerce.com</a>
+            <a href="#"><i class="fas fa-map-marker-alt"></i> manila, philippines</a>
         </div>
     </div>
-</footer>
+
+    <div class="credit">created by <span>lumino team</span> | all rights reserved</div>
+</section>
 
 <script src="assets/js/customer-api.js"></script>
 <script>
@@ -234,16 +376,24 @@
 
     async function loadCategories() {
         try {
+            console.log('Loading categories...');
             const response = await customerAPI.products.getCategories();
+            console.log('Categories response:', response);
             
             if (response.success) {
                 const select = document.getElementById('categoryFilter');
+                console.log('Category select element:', select);
+                console.log('Adding categories to dropdown...');
+                
                 response.data.forEach(category => {
+                    console.log('Adding category:', category.name);
                     const option = document.createElement('option');
                     option.value = category.slug;
                     option.textContent = `${category.name} (${category.product_count})`;
                     select.appendChild(option);
                 });
+                
+                console.log('Total options in dropdown:', select.options.length);
             }
         } catch (error) {
             console.error('Failed to load categories:', error);

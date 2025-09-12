@@ -247,7 +247,9 @@ $page_title = "Products";
                     ...filters
                 });
                 
-                const response = await fetch(`api/products/index.php?${params}`);
+                const response = await fetch(`api/products/index.php?${params}`, {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 
                 if (data.success) {
@@ -267,12 +269,18 @@ $page_title = "Products";
 
         async function loadCategories() {
             try {
-                const response = await fetch('api/products/categories.php');
+                const response = await fetch('api/products/categories.php', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
+                console.log('Categories API response:', data);
                 
                 if (data.success) {
                     categories = data.categories || [];
+                    console.log('Categories loaded:', categories);
                     renderCategoryOptions();
+                } else {
+                    console.error('Categories API failed:', data.message);
                 }
             } catch (error) {
                 console.error('Error loading categories:', error);
@@ -458,7 +466,9 @@ $page_title = "Products";
         // Product actions
         async function viewProduct(id) {
             try {
-                const response = await fetch(`api/products/detail.php?id=${id}`);
+                const response = await fetch(`api/products/detail.php?id=${id}`, {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 
                 if (data.success) {
@@ -608,7 +618,9 @@ $page_title = "Products";
 
         async function editProduct(id) {
             try {
-                const response = await fetch(`api/products/detail.php?id=${id}`);
+                const response = await fetch(`api/products/detail.php?id=${id}`, {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 
                 if (data.success) {
