@@ -658,21 +658,27 @@ function showToast(message, type = 'success') {
 
 // Real-time updates
 let pollingInterval;
-let notificationPollingInterval;
+let ticketNotificationPollingInterval;
 let lastMessageCount = 0;
 
 function startRealTimeUpdates() {
     // Poll every 5 seconds for new messages (more frequent for real-time feel)
-    pollingInterval = setInterval(async () => {
+    pollingInterval = setInterval(() => {
         if (ticketId && currentTicket && currentTicket.status !== 'closed') {
-            await checkForNewMessages();
+            checkForNewMessages().catch(error => {
+                console.debug('Message polling error:', error);
+            });
         }
     }, 5000);
     
     // Poll every 15 seconds for notification updates (less frequent than message updates)
-    notificationPollingInterval = setInterval(async () => {
+    ticketNotificationPollingInterval = setInterval(() => {
         if (typeof updateNotificationCount === 'function') {
-            updateNotificationCount();
+            try {
+                updateNotificationCount();
+            } catch (error) {
+                console.debug('Notification polling error:', error);
+            }
         }
     }, 15000);
 }
@@ -681,8 +687,8 @@ function stopRealTimeUpdates() {
     if (pollingInterval) {
         clearInterval(pollingInterval);
     }
-    if (notificationPollingInterval) {
-        clearInterval(notificationPollingInterval);
+    if (ticketNotificationPollingInterval) {
+        clearInterval(ticketNotificationPollingInterval);
     }
 }
 
@@ -706,7 +712,11 @@ async function checkForNewMessages() {
                     showToast(`You received ${agentReplies.length} new ${agentReplies.length === 1 ? 'reply' : 'replies'} from support!`, 'info');
                     
                     // Mark notifications as read since user is viewing the ticket
-                    await markTicketAsViewed(ticketId);
+                    try {
+                        await markTicketAsViewed(ticketId);
+                    } catch (markError) {
+                        console.debug('Failed to mark ticket as viewed:', markError);
+                    }
                     
                     // Play a subtle notification sound (optional)
                     if ('Notification' in window && Notification.permission === 'granted') {
@@ -728,14 +738,26 @@ async function checkForNewMessages() {
 async function markTicketAsViewed(ticketId) {
     try {
         // Mark support notifications as read in the new unified system
-        await customerAPI.notifications.markAllAsRead(['support']);
+        try {
+            await customerAPI.notifications.markAllAsRead(['support']);
+        } catch (notifError) {
+            console.debug('Failed to mark notifications as read:', notifError);
+        }
         
         // Also update the old support system for backward compatibility
-        await customerAPI.post('/support/notifications/mark-read');
+        try {
+            await customerAPI.post('/support/notifications/mark-read');
+        } catch (supportError) {
+            console.debug('Failed to mark old support notifications as read:', supportError);
+        }
         
         // Update notification count in navbar immediately
         if (typeof updateNotificationCount === 'function') {
-            await updateNotificationCount();
+            try {
+                await updateNotificationCount();
+            } catch (countError) {
+                console.debug('Failed to update notification count:', countError);
+            }
         }
     } catch (error) {
         console.debug('Failed to mark ticket as viewed:', error);

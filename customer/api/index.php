@@ -92,6 +92,10 @@ try {
             require_once 'support/index.php';
             break;
             
+        case 'notifications':
+            require_once 'notifications.php';
+            break;
+            
         default:
             http_response_code(404);
             echo json_encode([
