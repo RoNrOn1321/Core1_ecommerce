@@ -12,9 +12,13 @@ if (session_status() === PHP_SESSION_NONE) {
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 
-// For demo purposes, we'll use a default user ID (user with ID 1)
-// In production, implement proper customer authentication
-$userId = $_SESSION['user_id'] ?? 1; // Using John Doe as default user for demo
+// Get actual logged-in user ID from session
+if (!isset($_SESSION['customer_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Authentication required']);
+    exit;
+}
+$userId = $_SESSION['customer_id'];
 
 switch ($action) {
     case '':

@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -103,6 +105,25 @@ requireLogin();
                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                                 </div>
                                 <div class="sm:col-span-2">
+                                    <label for="mapSearch" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                        Select Location on Map
+                                    </label>
+                                    <div class="mb-4">
+                                        <div class="relative">
+                                            <input type="text" id="mapSearch" name="mapSearch" 
+                                                   placeholder="Search for an address or click on the map..."
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent pr-20">
+                                            <button type="button" id="getCurrentLocation" 
+                                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 focus:outline-none">
+                                                <i class="fas fa-crosshairs mr-1"></i>GPS
+                                            </button>
+                                        </div>
+                                        <div id="addressMap" class="mt-2 h-64 border border-gray-300 rounded-lg"></div>
+                                        <p class="text-xs text-gray-500 mt-1">Click on the map to select your location, or use the search box above</p>
+                                    </div>
+                                </div>
+                                <div class="sm:col-span-2">
                                     <label class="flex items-center">
                                         <input type="checkbox" id="saveAddress" name="saveAddress" 
                                                class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded mr-2">
@@ -136,12 +157,12 @@ requireLogin();
                                     Credit/Debit Card (Coming Soon)
                                 </label>
                             </div>
-                            <div class="flex items-center opacity-50">
-                                <input id="gcash" name="paymentMethod" type="radio" value="gcash" disabled
+                            <div class="flex items-center">
+                                <input id="gcash" name="paymentMethod" type="radio" value="gcash"
                                        class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300">
                                 <label for="gcash" class="ml-3 block text-sm font-medium text-gray-700">
                                     <i class="fas fa-mobile-alt text-blue-500 mr-2"></i>
-                                    GCash (Coming Soon)
+                                    GCash
                                 </label>
                             </div>
                         </div>
@@ -211,15 +232,25 @@ requireLogin();
     </div>
 </div>
 
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="assets/js/customer-api.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     loadCheckoutData();
+    initializeMap();
 });
 
 let selectedAddressId = null;
 let savedAddresses = [];
 let isNewAddressMode = false;
+
+// Map related variables
+let map;
+let currentMarker;
+const LOCATIONIQ_API_KEY = 'pk.d94f7afe5f777d19a9a33c823b40550e'; // Replace with your actual API key
+const DEFAULT_LAT = 8.6220221; // Philippines default location
+const DEFAULT_LNG = 123.68469;
 
 async function loadCheckoutData() {
     try {
@@ -318,7 +349,9 @@ function renderSavedAddresses() {
     
     if (savedAddresses.length === 0) {
         container.innerHTML = '<p class="text-sm text-gray-500">No saved addresses. Add a new address below.</p>';
-        showAddressForm();
+        if (!isNewAddressMode) {
+            showAddressForm();
+        }
         return;
     }
 
@@ -398,9 +431,21 @@ function showAddressForm() {
     document.getElementById('postalCode').value = '';
     document.getElementById('phone').value = '';
     document.getElementById('saveAddress').checked = false;
+    document.getElementById('mapSearch').value = '';
     
-    // Re-render addresses to clear selection
-    renderSavedAddresses();
+    // Initialize map when form is shown
+    setTimeout(() => {
+        if (map) {
+            map.invalidateSize();
+        } else {
+            initializeMap();
+        }
+    }, 100);
+    
+    // Re-render addresses to clear selection (only if we have addresses)
+    if (savedAddresses.length > 0) {
+        renderSavedAddresses();
+    }
 }
 
 function hideAddressForm() {
@@ -408,6 +453,187 @@ function hideAddressForm() {
     document.getElementById('addressForm').style.display = 'none';
     document.getElementById('addressModeBtn').innerHTML = '<i class="fas fa-plus mr-1"></i>Add New Address';
 }
+
+function initializeMap() {
+    // Initialize the map
+    map = L.map('addressMap').setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+    
+    // Add OpenStreetMap tiles (free, no API key required)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add click event to map
+    map.on('click', onMapClick);
+    
+    // Initialize search functionality
+    document.getElementById('mapSearch').addEventListener('input', debounce(searchLocation, 500));
+    document.getElementById('getCurrentLocation').addEventListener('click', getCurrentLocation);
+}
+
+function onMapClick(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+    
+    // Remove existing marker
+    if (currentMarker) {
+        map.removeLayer(currentMarker);
+    }
+    
+    // Add new marker
+    currentMarker = L.marker([lat, lng]).addTo(map);
+    
+    // Reverse geocode to get address
+    reverseGeocode(lat, lng);
+}
+
+async function reverseGeocode(lat, lng) {
+    try {
+        const response = await fetch(`https://us1.locationiq.com/v1/reverse.php?key=${LOCATIONIQ_API_KEY}&lat=${lat}&lon=${lng}&format=json&addressdetails=1`);
+        const data = await response.json();
+        
+        if (data && data.address) {
+            const address = data.address;
+            
+            // Update form fields with geocoded address
+            document.getElementById('address').value = 
+                `${address.house_number || ''} ${address.road || address.street || ''} ${address.neighbourhood || ''} ${address.suburb || ''}`.trim();
+            document.getElementById('city').value = address.city || address.town || address.municipality || address.village || '';
+            document.getElementById('province').value = address.state || address.province || '';
+            document.getElementById('postalCode').value = address.postcode || '';
+            
+            // Update search box
+            document.getElementById('mapSearch').value = data.display_name || '';
+            
+            showToast('Address updated from map location', 'success');
+        }
+    } catch (error) {
+        console.error('Reverse geocoding failed:', error);
+        showToast('Could not get address details. Please fill manually.', 'warning');
+    }
+}
+
+async function searchLocation(query) {
+    if (query.length < 3) return;
+    
+    try {
+        const response = await fetch(`https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=ph`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            const result = data[0];
+            const lat = parseFloat(result.lat);
+            const lng = parseFloat(result.lon);
+            
+            // Center map on search result
+            map.setView([lat, lng], 16);
+            
+            // Remove existing marker
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            
+            // Add new marker
+            currentMarker = L.marker([lat, lng]).addTo(map);
+            
+            // Update form fields
+            const addressParts = result.display_name.split(', ');
+            if (addressParts.length >= 3) {
+                document.getElementById('address').value = addressParts[0] || '';
+                document.getElementById('city').value = addressParts[1] || '';
+                document.getElementById('province').value = addressParts[2] || '';
+            }
+        }
+    } catch (error) {
+        console.error('Location search failed:', error);
+    }
+}
+
+function getCurrentLocation() {
+    const button = document.getElementById('getCurrentLocation');
+    
+    if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by this browser', 'error');
+        return;
+    }
+    
+    // Show loading state
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>GPS';
+    button.disabled = true;
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Center map on user location
+            map.setView([lat, lng], 16);
+            
+            // Remove existing marker
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            
+            // Add new marker
+            currentMarker = L.marker([lat, lng]).addTo(map);
+            
+            // Reverse geocode to get address
+            reverseGeocode(lat, lng);
+            
+            // Reset button
+            button.innerHTML = '<i class="fas fa-crosshairs mr-1"></i>GPS';
+            button.disabled = false;
+            
+            showToast('Location detected successfully', 'success');
+        },
+        (error) => {
+            console.error('Geolocation error:', error);
+            let message = 'Could not get your location';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = 'Location access denied by user';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = 'Location information is unavailable';
+                    break;
+                case error.TIMEOUT:
+                    message = 'Location request timed out';
+                    break;
+            }
+            
+            showToast(message, 'error');
+            
+            // Reset button
+            button.innerHTML = '<i class="fas fa-crosshairs mr-1"></i>GPS';
+            button.disabled = false;
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+        }
+    );
+}
+
+// Debounce function to limit API calls
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Update the search input to trigger search
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'mapSearch') {
+        const query = e.target.value;
+        if (query.length >= 3) {
+            searchLocation(query);
+        }
+    }
+});
 
 async function editAddress(addressId) {
     const address = savedAddresses.find(addr => addr.id === addressId);
@@ -463,6 +689,8 @@ async function placeOrder() {
                     state: document.getElementById('province').value,
                     postal_code: document.getElementById('postalCode').value,
                     phone: document.getElementById('phone').value,
+                    latitude: currentMarker ? currentMarker.getLatLng().lat : null,
+                    longitude: currentMarker ? currentMarker.getLatLng().lng : null,
                     is_default: savedAddresses.length === 0 // Set as default if it's the first address
                 };
                 
@@ -477,6 +705,7 @@ async function placeOrder() {
     
     // Get form data
     const formData = new FormData(form);
+    const paymentMethod = formData.get('paymentMethod');
     const orderData = {
         shipping_address: {
             full_name: document.getElementById('fullName').value,
@@ -486,7 +715,7 @@ async function placeOrder() {
             province: document.getElementById('province').value,
             phone: document.getElementById('phone').value
         },
-        payment_method: formData.get('paymentMethod'),
+        payment_method: paymentMethod,
         order_notes: formData.get('orderNotes') || null
     };
     
@@ -498,10 +727,47 @@ async function placeOrder() {
         const response = await customerAPI.orders.create(orderData);
         
         if (response.success) {
-            showToast('Order placed successfully! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = `account/orders.php?order=${response.data.order_id}`;
-            }, 2000);
+            const orderId = response.data.order_id;
+            const totalAmount = response.data.total_amount;
+            
+            if (paymentMethod === 'gcash') {
+                // Handle GCash payment
+                showToast('Order created! Redirecting to GCash payment...', 'success');
+                
+                try {
+                    // Create GCash payment
+                    const paymentResponse = await fetch('/Core1_ecommerce/customer/api/payments/create-gcash-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            order_id: orderId,
+                            amount: totalAmount
+                        })
+                    });
+                    
+                    const paymentResult = await paymentResponse.json();
+                    
+                    if (paymentResult.success) {
+                        // Redirect to PayMongo checkout
+                        window.location.href = paymentResult.data.checkout_url;
+                    } else {
+                        showToast(paymentResult.message || 'Failed to initialize GCash payment', 'error');
+                    }
+                    
+                } catch (paymentError) {
+                    console.error('GCash payment creation failed:', paymentError);
+                    showToast('Failed to initialize GCash payment. Please try again.', 'error');
+                }
+                
+            } else {
+                // COD or other payment methods
+                showToast('Order placed successfully! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = `account/orders.php?order=${orderId}`;
+                }, 2000);
+            }
         } else {
             showToast(response.message || 'Failed to place order', 'error');
         }

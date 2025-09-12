@@ -84,8 +84,8 @@ try {
             require_once 'addresses.php';
             break;
             
-        case 'payment':
-            require_once 'payment.php';
+        case 'payments':
+            require_once 'payments.php';
             break;
             
         case 'support':
