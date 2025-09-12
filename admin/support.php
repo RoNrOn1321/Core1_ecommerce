@@ -50,16 +50,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $pdo->beginTransaction();
                 
+                // Get ticket details for notification
+                $stmt = $pdo->prepare("SELECT user_id, ticket_number FROM support_tickets WHERE id = ?");
+                $stmt->execute([$ticket_id]);
+                $ticket = $stmt->fetch();
+                
                 // Add reply message
                 $stmt = $pdo->prepare("INSERT INTO support_ticket_messages (ticket_id, sender_type, sender_id, message) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$ticket_id, 'agent', getAdminId(), $message]);
                 
-                // Update ticket status to in_progress if it was open
-                $stmt = $pdo->prepare("UPDATE support_tickets SET status = CASE WHEN status = 'open' THEN 'in_progress' ELSE status END, updated_at = NOW() WHERE id = ?");
+                // Update ticket status to waiting_customer
+                $stmt = $pdo->prepare("UPDATE support_tickets SET status = 'waiting_customer', updated_at = NOW() WHERE id = ?");
                 $stmt->execute([$ticket_id]);
                 
+                // Create notification for the customer
+                require_once '../customer/includes/NotificationHelper.php';
+                $notificationHelper = new NotificationHelper($pdo);
+                $agentName = getAdminName() ?: 'Support Agent';
+                $notificationHelper->supportTicketReply(
+                    $ticket['user_id'], 
+                    $ticket_id, 
+                    $ticket['ticket_number'], 
+                    $agentName
+                );
+                
                 $pdo->commit();
-                $success_message = 'Reply sent successfully.';
+                $success_message = 'Reply sent successfully and customer notified.';
             } catch (PDOException $e) {
                 $pdo->rollBack();
                 $error_message = 'Error sending reply.';
