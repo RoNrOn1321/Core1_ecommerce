@@ -38,6 +38,7 @@
     <script src='js/quill.min.js'></script>
     <script src="js/apps.js"></script>
     <script src="js/notifications.js"></script>
+    <script src="js/search.js"></script>
     <?php if (isset($additional_js)): ?>
         <?php foreach ($additional_js as $js_file): ?>
             <script src="<?php echo $js_file; ?>"></script>

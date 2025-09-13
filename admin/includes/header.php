@@ -3,8 +3,10 @@
     <button type="button" class="navbar-toggler text-muted mt-2 p-0 mr-3 collapseSidebar">
         <i class="fe fe-menu navbar-toggler-icon"></i>
     </button>
-    <form class="form-inline mr-auto searchform text-muted">
-        <input class="form-control mr-sm-2 bg-transparent border-0 pl-4 text-muted" type="search" placeholder="Search..." aria-label="Search">
+    <form class="form-inline mr-auto searchform text-muted" id="mainSearchForm" onsubmit="return handleGlobalSearch(event)">
+        <div class="input-group">
+            <input class="form-control bg-transparent border-0 pl-4 text-muted" type="search" placeholder="Search orders, users, products..." aria-label="Search" id="globalSearchInput" onkeypress="handleGlobalSearchKeypress(event)">
+        </div>
     </form>
     <ul class="nav">
         <li class="nav-item">
