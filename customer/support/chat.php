@@ -279,6 +279,7 @@ let messagesContainer = null;
 let messageInput = null;
 let isTyping = false;
 let chatMessages = [];
+let messagePollingInterval = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     messagesContainer = document.getElementById('chatMessages');
@@ -324,24 +325,34 @@ async function checkAuthenticationAndInitializeChat() {
 
 async function initializeChat() {
     try {
-        // In a real implementation, this would create a chat session via API
-        // const response = await customerAPI.support.createChatRoom();
+        // Create real chat session via API
+        const response = await fetch('../api/create_chat_session.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        });
         
-        // Simulate chat room creation
-        chatSession = {
-            id: 'chat_' + Date.now(),
-            status: 'active',
-            agent: null,
-            created_at: new Date().toISOString()
-        };
+        const data = await response.json();
         
-        // Simulate joining queue
-        showQueueStatus();
-        
-        // Simulate agent assignment after a delay
-        setTimeout(() => {
-            assignAgent();
-        }, 3000);
+        if (data.success) {
+            chatSession = {
+                id: data.session_id,
+                status: 'waiting',
+                agent: null,
+                created_at: new Date().toISOString()
+            };
+            
+            // Show queue status
+            showQueueStatus();
+            
+            // Start polling for messages and session updates
+            startMessagePolling();
+            
+        } else {
+            throw new Error(data.error || 'Failed to create chat session');
+        }
         
     } catch (error) {
         console.error('Failed to initialize chat:', error);
@@ -437,54 +448,45 @@ function updateCharCount() {
 function showQueueStatus() {
     document.getElementById('queuePosition').style.display = 'block';
     document.getElementById('estimatedWait').style.display = 'block';
-    document.getElementById('agentStatusText').textContent = 'Connecting...';
+    document.getElementById('agentStatusText').textContent = 'Waiting for agent...';
+    document.getElementById('agentStatus').className = 'w-2 h-2 bg-yellow-400 rounded-full';
     
-    // Simulate queue updates
-    let position = 3;
-    const queueInterval = setInterval(() => {
-        if (position > 1) {
-            position--;
-            document.getElementById('queueNumber').textContent = position;
-            document.getElementById('waitTime').textContent = `${position * 30} sec`;
-        } else {
-            clearInterval(queueInterval);
-            document.getElementById('queuePosition').style.display = 'none';
-            document.getElementById('estimatedWait').style.display = 'none';
+    // Show initial queue position
+    document.getElementById('queueNumber').textContent = '1';
+    document.getElementById('waitTime').textContent = 'Connecting...';
+}
+
+async function sendMessage(message) {
+    if (!chatSession || !chatSession.id) {
+        showToast('No active chat session', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('../api/send_chat_message.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                session_id: chatSession.id,
+                message: message
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to send message');
         }
-    }, 1000);
-}
-
-function assignAgent() {
-    document.getElementById('agentStatusText').textContent = 'Agent Connected';
-    document.getElementById('agentStatus').className = 'w-2 h-2 bg-green-400 rounded-full';
-    
-    // Add agent introduction message
-    addMessage({
-        sender: 'agent',
-        name: 'Support Agent',
-        message: 'Hello! I\'m here to help you today. How can I assist you?',
-        timestamp: new Date().toISOString()
-    });
-    
-    // Hide quick actions after agent connects
-    setTimeout(() => {
-        document.getElementById('quickActions').style.display = 'none';
-    }, 5000);
-}
-
-function sendMessage(message) {
-    // Add customer message
-    addMessage({
-        sender: 'customer',
-        name: 'You',
-        message: message,
-        timestamp: new Date().toISOString()
-    });
-    
-    // Simulate agent response after delay
-    setTimeout(() => {
-        simulateAgentResponse(message);
-    }, 2000);
+        
+        // Message will be displayed when we poll for updates
+        
+    } catch (error) {
+        console.error('Failed to send message:', error);
+        showToast('Failed to send message. Please try again.', 'error');
+    }
 }
 
 function sendFileMessage(file) {
@@ -508,74 +510,47 @@ function sendQuickMessage(message) {
     messageInput.focus();
 }
 
-function addMessage(messageData) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `flex ${messageData.sender === 'customer' ? 'justify-end' : 'justify-start'}`;
-    
-    const isCustomer = messageData.sender === 'customer';
-    
-    messageDiv.innerHTML = `
-        <div class="flex items-end space-x-2 ${isCustomer ? 'flex-row-reverse space-x-reverse' : ''}">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isCustomer ? 'bg-blue-100' : 'bg-gray-100'}">
-                <i class="fas ${isCustomer ? 'fa-user' : 'fa-headset'} text-sm ${isCustomer ? 'text-blue-600' : 'text-gray-600'}"></i>
-            </div>
-            <div class="message-bubble ${isCustomer ? 'message-customer' : 'message-agent'} px-4 py-2 rounded-lg">
-                <div class="text-xs opacity-75 mb-1">${messageData.name}</div>
-                ${messageData.message ? `<div class="text-sm">${escapeHtml(messageData.message).replace(/\n/g, '<br>')}</div>` : ''}
-                ${messageData.file ? `
-                    <div class="flex items-center space-x-2 text-sm">
-                        <i class="fas fa-paperclip"></i>
-                        <span>${messageData.file.name}</span>
-                        <span class="opacity-75">(${formatFileSize(messageData.file.size)})</span>
-                    </div>
-                ` : ''}
-                <div class="text-xs opacity-75 mt-1">${new Date(messageData.timestamp).toLocaleTimeString()}</div>
-            </div>
-        </div>
-    `;
-    
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
-    chatMessages.push(messageData);
-}
 
-function simulateAgentResponse(customerMessage) {
-    // Show typing indicator
-    document.getElementById('typingIndicator').style.display = 'block';
+async function endChat() {
+    if (!chatSession || !chatSession.id) {
+        return;
+    }
     
-    setTimeout(() => {
-        document.getElementById('typingIndicator').style.display = 'none';
-        
-        // Generate appropriate response based on customer message
-        let response = "Thank you for contacting us. I understand your concern and I'm here to help you resolve this issue.";
-        
-        if (customerMessage.toLowerCase().includes('order')) {
-            response = "I can help you with your order. Could you please provide me with your order number so I can look up the details for you?";
-        } else if (customerMessage.toLowerCase().includes('product')) {
-            response = "I'd be happy to help you with product information. Which specific product are you interested in or having issues with?";
-        } else if (customerMessage.toLowerCase().includes('payment') || customerMessage.toLowerCase().includes('billing')) {
-            response = "I can assist you with payment and billing questions. For security purposes, I may need to verify some account information. What specific payment issue are you experiencing?";
-        } else if (customerMessage.toLowerCase().includes('technical')) {
-            response = "I'm here to help with technical issues. Can you describe the problem you're experiencing in more detail? Any error messages you're seeing?";
-        }
-        
-        addMessage({
-            sender: 'agent',
-            name: 'Support Agent',
-            message: response,
-            timestamp: new Date().toISOString()
-        });
-    }, 3000);
-}
-
-function endChat() {
     if (confirm('Are you sure you want to end this chat session?')) {
-        document.getElementById('chatInterface').style.display = 'none';
-        document.getElementById('chatEnded').style.display = 'block';
-        
-        // In real implementation, notify server about chat end
-        chatSession.status = 'ended';
+        try {
+            const response = await fetch('../api/end_chat_session.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    session_id: chatSession.id
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Stop polling
+                if (messagePollingInterval) {
+                    clearInterval(messagePollingInterval);
+                    messagePollingInterval = null;
+                }
+                
+                // Update UI
+                document.getElementById('chatInterface').style.display = 'none';
+                document.getElementById('chatEnded').style.display = 'block';
+                
+                chatSession.status = 'ended';
+            } else {
+                throw new Error(data.error || 'Failed to end chat session');
+            }
+            
+        } catch (error) {
+            console.error('Failed to end chat:', error);
+            showToast('Failed to end chat session. Please try again.', 'error');
+        }
     }
 }
 
@@ -583,12 +558,147 @@ function startNewChat() {
     // Reset chat state
     chatMessages = [];
     messagesContainer.innerHTML = '';
+    chatSession = null;
+    
+    // Stop any existing polling
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+        messagePollingInterval = null;
+    }
+    
     document.getElementById('chatEnded').style.display = 'none';
     document.getElementById('quickActions').style.display = 'block';
     
     // Reinitialize chat
     initializeChat();
     document.getElementById('chatInterface').style.display = 'block';
+}
+
+function startMessagePolling() {
+    // Stop any existing polling
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+    }
+    
+    // Start polling for messages every 3 seconds
+    messagePollingInterval = setInterval(loadMessages, 3000);
+    
+    // Load messages immediately
+    loadMessages();
+}
+
+async function loadMessages() {
+    if (!chatSession || !chatSession.id) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`../api/get_chat_messages.php?session_id=${chatSession.id}`, {
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update session status
+            if (data.session.status !== chatSession.status) {
+                chatSession.status = data.session.status;
+                updateSessionStatus(data.session.status);
+            }
+            
+            // Display messages
+            displayMessages(data.messages);
+            
+        } else {
+            console.error('Failed to load messages:', data.error);
+        }
+        
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+function updateSessionStatus(status) {
+    const statusElement = document.getElementById('agentStatusText');
+    const statusIndicator = document.getElementById('agentStatus');
+    
+    switch (status) {
+        case 'waiting':
+            statusElement.textContent = 'Waiting for agent...';
+            statusIndicator.className = 'w-2 h-2 bg-yellow-400 rounded-full';
+            break;
+        case 'active':
+            statusElement.textContent = 'Agent Connected';
+            statusIndicator.className = 'w-2 h-2 bg-green-400 rounded-full';
+            document.getElementById('queuePosition').style.display = 'none';
+            document.getElementById('estimatedWait').style.display = 'none';
+            document.getElementById('quickActions').style.display = 'none';
+            break;
+        case 'ended':
+            statusElement.textContent = 'Chat Ended';
+            statusIndicator.className = 'w-2 h-2 bg-red-400 rounded-full';
+            // Stop polling
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+                messagePollingInterval = null;
+            }
+            // Show chat ended screen
+            setTimeout(() => {
+                document.getElementById('chatInterface').style.display = 'none';
+                document.getElementById('chatEnded').style.display = 'block';
+            }, 1000);
+            break;
+    }
+}
+
+function displayMessages(messages) {
+    const container = messagesContainer;
+    const shouldScroll = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    messages.forEach(message => {
+        addMessageToDisplay(message);
+    });
+    
+    // Scroll to bottom if user was at bottom
+    if (shouldScroll) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+function addMessageToDisplay(messageData) {
+    const messageDiv = document.createElement('div');
+    const isCustomer = messageData.sender_type === 'customer';
+    const isSystem = messageData.message_type === 'system';
+    
+    if (isSystem) {
+        // System message
+        messageDiv.className = 'flex justify-center mb-3';
+        messageDiv.innerHTML = `
+            <div class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
+                ${escapeHtml(messageData.message)}
+            </div>
+        `;
+    } else {
+        // Regular message
+        messageDiv.className = `flex ${isCustomer ? 'justify-end' : 'justify-start'} mb-3`;
+        
+        messageDiv.innerHTML = `
+            <div class="flex items-end space-x-2 ${isCustomer ? 'flex-row-reverse space-x-reverse' : ''}">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isCustomer ? 'bg-blue-100' : 'bg-gray-100'}">
+                    <i class="fas ${isCustomer ? 'fa-user' : 'fa-headset'} text-sm ${isCustomer ? 'text-blue-600' : 'text-gray-600'}"></i>
+                </div>
+                <div class="message-bubble ${isCustomer ? 'message-customer' : 'message-agent'} px-4 py-2 rounded-lg">
+                    <div class="text-xs opacity-75 mb-1">${messageData.sender_name}</div>
+                    <div class="text-sm">${escapeHtml(messageData.message).replace(/\n/g, '<br>')}</div>
+                    <div class="text-xs opacity-75 mt-1">${new Date(messageData.created_at).toLocaleTimeString()}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    messagesContainer.appendChild(messageDiv);
 }
 
 function formatFileSize(bytes) {
@@ -607,7 +717,8 @@ function escapeHtml(text) {
 
 // Toast notification function
 function showToast(message, type = 'success') {
-    if (typeof window.showToast === 'function') {
+    // Check if there's a global showToast function that isn't this one
+    if (typeof window.showToast === 'function' && window.showToast !== showToast) {
         window.showToast(message, type);
         return;
     }

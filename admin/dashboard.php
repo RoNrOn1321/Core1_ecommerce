@@ -41,6 +41,17 @@ try {
     ");
     $recent_orders = $stmt->fetchAll();
     
+    // Chat statistics
+    $stmt = $pdo->query("
+        SELECT 
+            COUNT(*) as total_chats,
+            SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting_chats,
+            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_chats,
+            SUM(CASE WHEN DATE(started_at) = CURDATE() THEN 1 ELSE 0 END) as today_chats
+        FROM chat_sessions
+    ");
+    $chat_stats = $stmt->fetch();
+    
 } catch (PDOException $e) {
     // If database is not ready, set default values
     $total_users = 0;
@@ -49,7 +60,18 @@ try {
     $total_products = 0;
     $total_orders = 0;
     $recent_orders = [];
+    $chat_stats = ['total_chats' => 0, 'waiting_chats' => 0, 'active_chats' => 0, 'today_chats' => 0];
 }
+
+// Page-specific CSS
+$additional_css = [];
+$additional_head = '
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+</style>
+';
 
 // Include layout start
 include 'includes/layout_start.php';
@@ -121,6 +143,63 @@ include 'includes/layout_start.php';
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Management Quick Access -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <?php if (($chat_stats['waiting_chats'] + $chat_stats['active_chats']) > 0): ?>
+                                <div class="alert alert-primary border-left-primary shadow">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <h6 class="text-primary font-weight-bold mb-1">
+                                                <i class="fe fe-message-circle mr-2"></i>
+                                                Live Chat Activity
+                                            </h6>
+                                            <p class="mb-2">
+                                                <span class="badge badge-warning mr-2"><?php echo $chat_stats['waiting_chats']; ?> waiting</span>
+                                                <span class="badge badge-success mr-2"><?php echo $chat_stats['active_chats']; ?> active</span>
+                                                <span class="badge badge-info"><?php echo $chat_stats['today_chats']; ?> today</span>
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <?php if ($chat_stats['waiting_chats'] > 0): ?>
+                                                    <strong><?php echo $chat_stats['waiting_chats']; ?> customer(s) waiting for support</strong> - Please respond promptly!
+                                                <?php else: ?>
+                                                    All chat sessions are being handled. Great job! 👍
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
+                                        <div class="col-auto">
+                                            <a href="chat.php" class="btn btn-primary">
+                                                <i class="fe fe-message-circle mr-2"></i>Manage Chats
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php else: ?>
+                                <div class="alert alert-light border shadow-sm">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <h6 class="text-muted font-weight-bold mb-1">
+                                                <i class="fe fe-message-circle mr-2"></i>
+                                                Live Chat Management
+                                            </h6>
+                                            <p class="text-muted small mb-0">
+                                                No active chat sessions. Ready to help customers when they need support.
+                                                <?php if ($chat_stats['today_chats'] > 0): ?>
+                                                    <span class="badge badge-info ml-1"><?php echo $chat_stats['today_chats']; ?> chats today</span>
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
+                                        <div class="col-auto">
+                                            <a href="chat.php" class="btn btn-outline-primary">
+                                                <i class="fe fe-message-circle mr-2"></i>Chat Dashboard
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
 

@@ -13,22 +13,37 @@ function requireAuth() {
 }
 
 function isLoggedIn() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     return isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
 }
 
 function getAdminId() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     return $_SESSION['admin_id'] ?? null;
 }
 
 function getAdminName() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     return $_SESSION['admin_name'] ?? 'Admin';
 }
 
 function getAdminRole() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     return $_SESSION['admin_role'] ?? 'admin';
 }
 
 function getAdminEmail() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     return $_SESSION['admin_email'] ?? '';
 }
 
@@ -42,6 +57,10 @@ function logout() {
 }
 
 function hasPermission($permission) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
     $role = getAdminRole();
     
     // Super admin has all permissions
@@ -51,7 +70,7 @@ function hasPermission($permission) {
     
     // Define role permissions
     $permissions = [
-        'admin' => ['view_dashboard', 'manage_users', 'manage_sellers', 'manage_products', 'manage_orders', 'view_reports'],
+        'admin' => ['view_dashboard', 'manage_users', 'manage_sellers', 'manage_products', 'manage_orders', 'manage_support', 'view_reports'],
         'support_agent' => ['view_dashboard', 'manage_support', 'view_orders'],
         'content_manager' => ['view_dashboard', 'manage_products', 'manage_content']
     ];

@@ -25,6 +25,10 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as open_tickets FROM support_tickets WHERE status IN ('open', 'in_progress')");
     $open_tickets = $stmt->fetch()['open_tickets'];
     
+    // Active chat sessions (for notification badge)
+    $stmt = $pdo->query("SELECT COUNT(*) as active_chats FROM chat_sessions WHERE status IN ('waiting', 'active')");
+    $active_chats = $stmt->fetch()['active_chats'];
+    
 } catch (PDOException $e) {
     // If database is not ready, set default values
     $total_users = 0;
@@ -33,6 +37,7 @@ try {
     $total_orders = 0;
     $pending_orders = 0;
     $open_tickets = 0;
+    $active_chats = 0;
 }
 
 // Get current page to highlight active menu item
@@ -99,6 +104,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <i class="fe fe-headphones fe-16"></i>
                     <span class="ml-3 item-text">Support</span>
                     <span class="badge badge-pill badge-danger ml-auto" data-notification="support" style="<?php echo $open_tickets > 0 ? '' : 'display: none;'; ?>"><?php echo $open_tickets; ?></span>
+                </a>
+            </li>
+            <li class="nav-item w-100">
+                <a class="nav-link <?php echo ($current_page == 'chat.php') ? 'active' : ''; ?>" href="chat.php">
+                    <i class="fe fe-message-circle fe-16"></i>
+                    <span class="ml-3 item-text">Live Chat</span>
+                    <span class="badge badge-pill badge-primary ml-auto" data-notification="chat" style="<?php echo $active_chats > 0 ? '' : 'display: none;'; ?>"><?php echo $active_chats; ?></span>
                 </a>
             </li>
             <li class="nav-item w-100">
