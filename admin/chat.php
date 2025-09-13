@@ -552,28 +552,29 @@ function sendMessage(event) {
     })
     .catch(error => {
         console.error('Error sending message:', error);
-        alert('Error sending message: ' + error.message);
+        window.confirmModal.alert('Error sending message: ' + error.message, null, {title: 'Error'});
     });
 }
 
 function endChatSession() {
     if (!currentSessionId) {
-        alert('No active chat session to end.');
+        window.confirmModal.alert('No active chat session to end.', null, {title: 'No Active Session'});
         return;
     }
     
-    if (confirm('Are you sure you want to end this chat session?')) {
-        console.log('Ending chat session:', currentSessionId);
-        fetch('api/end_chat_session.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                session_id: currentSessionId
+    window.confirmModal.confirm('Are you sure you want to end this chat session?', function(confirmed) {
+        if (confirmed) {
+            console.log('Ending chat session:', currentSessionId);
+            fetch('api/end_chat_session.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    session_id: currentSessionId
+                })
             })
-        })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -602,9 +603,10 @@ function endChatSession() {
         })
         .catch(error => {
             console.error('Error ending chat session:', error);
-            alert('Error ending chat session: ' + error.message);
+            window.confirmModal.alert('Error ending chat session: ' + error.message, null, {title: 'Error'});
         });
-    }
+        }
+    }, {title: 'End Chat Session', confirmText: 'End Session', confirmClass: 'btn-warning'});
 }
 
 function updateCharCount() {

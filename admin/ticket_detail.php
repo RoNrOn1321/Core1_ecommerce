@@ -710,17 +710,22 @@ function formatFileSize($bytes) {
     }
     
     function updateStatus(status) {
-        if (confirm('Are you sure you want to change the ticket status to "' + status.replace('_', ' ') + '"?')) {
-            $('#new_status').val(status);
-            $('#updateStatusForm').submit();
-        }
+        const statusText = status.replace('_', ' ');
+        window.confirmModal.confirm('Are you sure you want to change the ticket status to "' + statusText + '"?', function(confirmed) {
+            if (confirmed) {
+                $('#new_status').val(status);
+                $('#updateStatusForm').submit();
+            }
+        }, {title: 'Change Status', confirmText: 'Change Status', confirmClass: 'btn-primary'});
     }
     
     function updatePriority(priority) {
-        if (confirm('Are you sure you want to change the ticket priority to "' + priority + '"?')) {
-            $('#new_priority').val(priority);
-            $('#updatePriorityForm').submit();
-        }
+        window.confirmModal.confirm('Are you sure you want to change the ticket priority to "' + priority + '"?', function(confirmed) {
+            if (confirmed) {
+                $('#new_priority').val(priority);
+                $('#updatePriorityForm').submit();
+            }
+        }, {title: 'Change Priority', confirmText: 'Change Priority', confirmClass: 'btn-warning'});
     }
     </script>
 </body>

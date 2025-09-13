@@ -366,7 +366,7 @@ include 'includes/layout_start.php';
                                                                         <input type="hidden" name="action" value="toggle_admin_status">
                                                                         <input type="hidden" name="admin_id" value="<?php echo $admin['id']; ?>">
                                                                         <button type="submit" class="btn btn-sm btn-outline-<?php echo $admin['is_active'] ? 'warning' : 'success'; ?>"
-                                                                                onclick="return confirm('Are you sure?')">
+                                                                                onclick="return confirmAdminAction('<?php echo $admin['is_active'] ? 'deactivate' : 'activate'; ?>', this.form)">
                                                                             <?php echo $admin['is_active'] ? 'Deactivate' : 'Activate'; ?>
                                                                         </button>
                                                                     </form>
@@ -449,5 +449,22 @@ include 'includes/layout_start.php';
                                 </div>
                             </div>
                         </div>
+
+<script>
+function confirmAdminAction(action, form) {
+    const message = `Are you sure you want to ${action} this admin user?`;
+    const title = action === 'activate' ? 'Activate Admin' : 'Deactivate Admin';
+    const confirmText = action === 'activate' ? 'Activate' : 'Deactivate';
+    const confirmClass = action === 'activate' ? 'btn-success' : 'btn-warning';
+    
+    window.confirmModal.confirm(message, function(confirmed) {
+        if (confirmed) {
+            form.submit();
+        }
+    }, {title: title, confirmText: confirmText, confirmClass: confirmClass});
+    
+    return false; // Prevent default form submission
+}
+</script>
 
 <?php include 'includes/layout_end.php'; ?>

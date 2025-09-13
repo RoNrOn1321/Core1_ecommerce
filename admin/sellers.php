@@ -332,7 +332,7 @@ include 'includes/layout_start.php';
                                                                             <input type="hidden" name="action" value="approve">
                                                                             <input type="hidden" name="seller_id" value="<?php echo $seller['id']; ?>">
                                                                             <button type="submit" class="dropdown-item text-success" 
-                                                                                    onclick="return confirm('Are you sure you want to approve this seller?')">
+                                                                                    onclick="return confirmSellerAction('approve', <?php echo $seller['id']; ?>, this.form)">
                                                                                 <i class="fe fe-check"></i> Approve
                                                                             </button>
                                                                         </form>
@@ -340,7 +340,7 @@ include 'includes/layout_start.php';
                                                                             <input type="hidden" name="action" value="reject">
                                                                             <input type="hidden" name="seller_id" value="<?php echo $seller['id']; ?>">
                                                                             <button type="submit" class="dropdown-item text-danger" 
-                                                                                    onclick="return confirm('Are you sure you want to reject this seller?')">
+                                                                                    onclick="return confirmSellerAction('reject', <?php echo $seller['id']; ?>, this.form)">
                                                                                 <i class="fe fe-x"></i> Reject
                                                                             </button>
                                                                         </form>
@@ -351,7 +351,7 @@ include 'includes/layout_start.php';
                                                                             <input type="hidden" name="action" value="suspend">
                                                                             <input type="hidden" name="seller_id" value="<?php echo $seller['id']; ?>">
                                                                             <button type="submit" class="dropdown-item text-warning" 
-                                                                                    onclick="return confirm('Are you sure you want to suspend this seller?')">
+                                                                                    onclick="return confirmSellerAction('suspend', <?php echo $seller['id']; ?>, this.form)">
                                                                                 <i class="fe fe-pause"></i> Suspend
                                                                             </button>
                                                                         </form>
@@ -397,5 +397,45 @@ include 'includes/layout_start.php';
                                 <?php endif; ?>
                             </div>
                         </div>
+
+<script>
+function confirmSellerAction(action, sellerId, form) {
+    let message, title, confirmText, confirmClass;
+    
+    switch(action) {
+        case 'approve':
+            message = 'Are you sure you want to approve this seller?';
+            title = 'Approve Seller';
+            confirmText = 'Approve';
+            confirmClass = 'btn-success';
+            break;
+        case 'reject':
+            message = 'Are you sure you want to reject this seller?';
+            title = 'Reject Seller';
+            confirmText = 'Reject';
+            confirmClass = 'btn-danger';
+            break;
+        case 'suspend':
+            message = 'Are you sure you want to suspend this seller?';
+            title = 'Suspend Seller';
+            confirmText = 'Suspend';
+            confirmClass = 'btn-warning';
+            break;
+        default:
+            message = 'Are you sure you want to perform this action?';
+            title = 'Confirm Action';
+            confirmText = 'Confirm';
+            confirmClass = 'btn-primary';
+    }
+    
+    window.confirmModal.confirm(message, function(confirmed) {
+        if (confirmed) {
+            form.submit();
+        }
+    }, {title: title, confirmText: confirmText, confirmClass: confirmClass});
+    
+    return false; // Prevent default form submission
+}
+</script>
 
 <?php include 'includes/layout_end.php'; ?>

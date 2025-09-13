@@ -568,10 +568,12 @@ function showTrackingModal() {
 }
 
 function confirmCancel() {
-    if (confirm("Are you sure you want to cancel this order?")) {
-        $("#new_status").val("cancelled");
-        $("#statusModal").modal("show");
-    }
+    window.confirmModal.confirm("Are you sure you want to cancel this order?", function(confirmed) {
+        if (confirmed) {
+            $("#new_status").val("cancelled");
+            $("#statusModal").modal("show");
+        }
+    }, {title: 'Cancel Order', confirmText: 'Cancel Order', confirmClass: 'btn-danger'});
 }
 ';
 

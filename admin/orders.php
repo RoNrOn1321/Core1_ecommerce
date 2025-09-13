@@ -547,9 +547,11 @@ function showTrackingModal(orderId, trackingNumber, courierCompany) {
 }
 
 function confirmCancel(orderId) {
-    if (confirm('Are you sure you want to cancel this order?')) {
-        showStatusModal(orderId, 'cancelled');
-    }
+    window.confirmModal.confirm('Are you sure you want to cancel this order?', function(confirmed) {
+        if (confirmed) {
+            showStatusModal(orderId, 'cancelled');
+        }
+    }, {title: 'Cancel Order', confirmText: 'Cancel Order', confirmClass: 'btn-danger'});
 }
 </script>
 
