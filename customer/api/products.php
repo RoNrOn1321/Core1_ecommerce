@@ -109,11 +109,14 @@ switch ($action) {
                     c.name as category_name,
                     c.slug as category_slug,
                     s.store_name as seller_name,
-                    GROUP_CONCAT(pi.image_url) as images
+                    GROUP_CONCAT(DISTINCT pi.image_url) as images,
+                    AVG(pr.rating) as avg_rating,
+                    COUNT(pr.id) as review_count
                 FROM products p
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN sellers s ON p.seller_id = s.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id
+                LEFT JOIN product_reviews pr ON p.id = pr.product_id AND pr.is_approved = 1
                 WHERE $whereClause
                 GROUP BY p.id
                 ORDER BY p.$sortBy $sortOrder
@@ -134,6 +137,8 @@ switch ($action) {
                 $product['featured'] = intval($product['featured']);
                 $product['images'] = $product['images'] ? explode(',', $product['images']) : [];
                 $product['in_stock'] = $product['stock_quantity'] > 0 && $product['stock_status'] === 'in_stock';
+                $product['avg_rating'] = $product['avg_rating'] ? round(floatval($product['avg_rating']), 1) : 0;
+                $product['review_count'] = intval($product['review_count']);
             }
             
             $totalPages = ceil($total / $limit);
@@ -227,11 +232,14 @@ switch ($action) {
                     c.name as category_name,
                     c.slug as category_slug,
                     s.store_name as seller_name,
-                    GROUP_CONCAT(pi.image_url) as images
+                    GROUP_CONCAT(DISTINCT pi.image_url) as images,
+                    AVG(pr.rating) as avg_rating,
+                    COUNT(pr.id) as review_count
                 FROM products p
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN sellers s ON p.seller_id = s.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id
+                LEFT JOIN product_reviews pr ON p.id = pr.product_id AND pr.is_approved = 1
                 WHERE p.status = 'published' AND p.featured = 1
                 GROUP BY p.id
                 ORDER BY p.updated_at DESC
@@ -248,6 +256,8 @@ switch ($action) {
                 $product['stock_quantity'] = intval($product['stock_quantity']);
                 $product['images'] = $product['images'] ? explode(',', $product['images']) : [];
                 $product['in_stock'] = $product['stock_quantity'] > 0 && $product['stock_status'] === 'in_stock';
+                $product['avg_rating'] = $product['avg_rating'] ? round(floatval($product['avg_rating']), 1) : 0;
+                $product['review_count'] = intval($product['review_count']);
             }
             
             echo json_encode([

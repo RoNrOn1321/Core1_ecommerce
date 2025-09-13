@@ -252,10 +252,19 @@
             </div>
 
             <div id="tab-reviews" class="tab-content hidden">
-                <div class="text-center py-12">
-                    <i class="fas fa-star text-6xl text-gray-300 mb-4"></i>
-                    <h4 class="text-xl font-semibold text-gray-700 mb-2">No reviews yet</h4>
-                    <p class="text-gray-500">Be the first to review this product!</p>
+                <!-- Reviews Summary -->
+                <div id="reviewsSummary" class="mb-8">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Reviews List -->
+                <div id="reviewsList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Reviews Pagination -->
+                <div id="reviewsPagination" class="flex justify-center mt-6">
+                    <!-- Will be populated by JavaScript -->
                 </div>
             </div>
 
@@ -669,6 +678,235 @@ include '../components/footer.php';
         });
         
         document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+        
+        // Load reviews when reviews tab is opened
+        if (tabName === 'reviews') {
+            loadProductReviews();
+        }
+    }
+
+    // Reviews functionality
+    let currentReviewPage = 1;
+    
+    async function loadProductReviews(page = 1) {
+        if (!productData) return;
+        
+        currentReviewPage = page;
+        
+        try {
+            const response = await customerAPI.reviews.getProductReviews(productData.id, {
+                page: page,
+                limit: 5
+            });
+            
+            if (response.success) {
+                renderReviewsSummary(response.data.rating_summary);
+                renderReviewsList(response.data.reviews);
+                renderReviewsPagination(response.data.pagination);
+                updateReviewsTabTitle(response.data.rating_summary.total_reviews);
+            } else {
+                renderEmptyReviews();
+            }
+        } catch (error) {
+            console.error('Failed to load reviews:', error);
+            renderEmptyReviews();
+        }
+    }
+    
+    function renderReviewsSummary(ratingSummary) {
+        const container = document.getElementById('reviewsSummary');
+        
+        if (!ratingSummary || ratingSummary.total_reviews === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        const avgRating = parseFloat(ratingSummary.avg_rating || 0);
+        const totalReviews = parseInt(ratingSummary.total_reviews || 0);
+        
+        container.innerHTML = `
+            <div class="bg-gray-50 rounded-lg p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Overall Rating -->
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-gray-900 mb-2">${avgRating.toFixed(1)}</div>
+                        <div class="flex justify-center mb-2">
+                            ${generateStarDisplay(avgRating)}
+                        </div>
+                        <div class="text-gray-600">${totalReviews} review${totalReviews !== 1 ? 's' : ''}</div>
+                    </div>
+                    
+                    <!-- Rating Breakdown -->
+                    <div class="space-y-2">
+                        ${generateRatingBreakdown(ratingSummary, totalReviews)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderReviewsList(reviews) {
+        const container = document.getElementById('reviewsList');
+        
+        if (!reviews || reviews.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12">
+                    <i class="fas fa-star text-6xl text-gray-300 mb-4"></i>
+                    <h4 class="text-xl font-semibold text-gray-700 mb-2">No reviews yet</h4>
+                    <p class="text-gray-500">Be the first to review this product!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const reviewsHTML = reviews.map(review => `
+            <div class="border-b border-gray-200 py-6 last:border-b-0">
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        ${(review.first_name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <h5 class="font-semibold text-gray-900">${review.first_name || 'Anonymous'} ${review.last_name || ''}</h5>
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex">${generateStarDisplay(review.rating)}</div>
+                                    <span class="text-sm text-gray-500">${new Date(review.created_at).toLocaleDateString()}</span>
+                                    ${review.purchase_verified ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Verified Purchase</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <h6 class="font-medium text-gray-900 mb-2">${review.title}</h6>
+                        <p class="text-gray-700 leading-relaxed">${review.review_text || 'No additional comments'}</p>
+                        
+                        ${review.helpful_count > 0 ? `
+                            <div class="mt-3 flex items-center text-sm text-gray-500">
+                                <i class="fas fa-thumbs-up mr-1"></i>
+                                ${review.helpful_count} people found this helpful
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = reviewsHTML;
+    }
+    
+    function renderReviewsPagination(pagination) {
+        const container = document.getElementById('reviewsPagination');
+        
+        if (!pagination || pagination.total_pages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let paginationHTML = '<div class="flex items-center space-x-2">';
+        
+        // Previous button
+        if (pagination.current_page > 1) {
+            paginationHTML += `
+                <button onclick="loadProductReviews(${pagination.current_page - 1})" 
+                        class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            `;
+        }
+        
+        // Page numbers
+        const startPage = Math.max(1, pagination.current_page - 2);
+        const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const isActive = i === pagination.current_page;
+            paginationHTML += `
+                <button onclick="loadProductReviews(${i})" 
+                        class="px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-amber-600 text-white' : 'border border-gray-300 hover:bg-gray-50'}">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        // Next button
+        if (pagination.current_page < pagination.total_pages) {
+            paginationHTML += `
+                <button onclick="loadProductReviews(${pagination.current_page + 1})" 
+                        class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+        }
+        
+        paginationHTML += '</div>';
+        container.innerHTML = paginationHTML;
+    }
+    
+    function renderEmptyReviews() {
+        document.getElementById('reviewsSummary').innerHTML = '';
+        document.getElementById('reviewsList').innerHTML = `
+            <div class="text-center py-12">
+                <i class="fas fa-star text-6xl text-gray-300 mb-4"></i>
+                <h4 class="text-xl font-semibold text-gray-700 mb-2">No reviews yet</h4>
+                <p class="text-gray-500">Be the first to review this product!</p>
+            </div>
+        `;
+        document.getElementById('reviewsPagination').innerHTML = '';
+        updateReviewsTabTitle(0);
+    }
+    
+    function generateStarDisplay(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        
+        let starsHTML = '';
+        
+        // Full stars
+        for (let i = 0; i < fullStars; i++) {
+            starsHTML += '<i class="fas fa-star text-yellow-400"></i>';
+        }
+        
+        // Half star
+        if (hasHalfStar) {
+            starsHTML += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+        }
+        
+        // Empty stars
+        for (let i = 0; i < emptyStars; i++) {
+            starsHTML += '<i class="far fa-star text-yellow-400"></i>';
+        }
+        
+        return starsHTML;
+    }
+    
+    function generateRatingBreakdown(ratingSummary, totalReviews) {
+        const ratings = [
+            { stars: 5, count: parseInt(ratingSummary.five_star || 0) },
+            { stars: 4, count: parseInt(ratingSummary.four_star || 0) },
+            { stars: 3, count: parseInt(ratingSummary.three_star || 0) },
+            { stars: 2, count: parseInt(ratingSummary.two_star || 0) },
+            { stars: 1, count: parseInt(ratingSummary.one_star || 0) }
+        ];
+        
+        return ratings.map(rating => {
+            const percentage = totalReviews > 0 ? (rating.count / totalReviews) * 100 : 0;
+            return `
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm text-gray-600 w-8">${rating.stars}★</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-2">
+                        <div class="bg-yellow-400 rounded-full h-2" style="width: ${percentage}%"></div>
+                    </div>
+                    <span class="text-sm text-gray-600 w-8">${rating.count}</span>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function updateReviewsTabTitle(totalReviews) {
+        const reviewsButton = document.querySelector('.tab-button[onclick*="reviews"]');
+        if (reviewsButton) {
+            reviewsButton.textContent = `Reviews (${totalReviews || 0})`;
+        }
     }
     
     async function updateCartCount() {

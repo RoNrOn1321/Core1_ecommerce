@@ -463,12 +463,8 @@ if (session_status() === PHP_SESSION_NONE) {
                             ${product.in_stock ? `✓ ${product.stock_quantity} in stock` : '✗ Out of stock'}
                         </p>
                         <div class="flex items-center text-yellow-400">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <span class="text-gray-500 text-sm ml-1">(4.8)</span>
+                            ${generateProductStars(product.avg_rating || 0)}
+                            <span class="text-gray-500 text-sm ml-1">(${product.review_count || 0})</span>
                         </div>
                     </div>
                     <button onclick="addToCart(${product.id}, '${product.name}', ${product.price})"
@@ -690,6 +686,31 @@ if (session_status() === PHP_SESSION_NONE) {
         } catch (error) {
             // Silently fail - wishlist functionality is optional and user may not be logged in
         }
+    }
+    
+    function generateProductStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        
+        let starsHTML = '';
+        
+        // Full stars
+        for (let i = 0; i < fullStars; i++) {
+            starsHTML += '<i class="fas fa-star"></i>';
+        }
+        
+        // Half star
+        if (hasHalfStar) {
+            starsHTML += '<i class="fas fa-star-half-alt"></i>';
+        }
+        
+        // Empty stars
+        for (let i = 0; i < emptyStars; i++) {
+            starsHTML += '<i class="far fa-star"></i>';
+        }
+        
+        return starsHTML;
     }
     
     function showToast(message, type = 'success') {

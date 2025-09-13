@@ -395,6 +395,33 @@ const customerAPI = {
         }
     },
 
+    // Reviews methods
+    reviews: {
+        async getProductReviews(productId, params = {}) {
+            return customerAPI.get('/reviews/list', { product_id: productId, ...params });
+        },
+
+        async getReviewableItems(orderId) {
+            return customerAPI.get('/reviews/list', { order_id: orderId });
+        },
+
+        async getUserReviews(params = {}) {
+            return customerAPI.get('/reviews/list', params);
+        },
+
+        async submitReview(reviewData) {
+            return customerAPI.post('/reviews/submit', reviewData);
+        },
+
+        async updateReview(reviewId, reviewData) {
+            return customerAPI.put('/reviews/update', { id: reviewId, ...reviewData });
+        },
+
+        async deleteReview(reviewId) {
+            return customerAPI.delete(`/reviews/delete?id=${reviewId}`);
+        }
+    },
+
     // Utility methods
     utils: {
         // Format currency

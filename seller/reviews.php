@@ -1,4 +1,7 @@
 <?php
+session_start();
+require_once 'includes/auth.php';
+requireSellerAuth();
 $page_title = "Reviews";
 ?>
 <?php include 'includes/header.php'; ?>
@@ -14,344 +17,544 @@ $page_title = "Reviews";
                 <p class="text-gray-600">Manage customer feedback and improve your store reputation</p>
             </div>
 
-            <!-- Review Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
-                            <i class="fas fa-star text-white text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Average Rating</p>
-                            <p class="text-2xl font-bold text-gray-900">4.7</p>
-                            <div class="flex text-yellow-400">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </div>
-                        </div>
+            <!-- Filters -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="statusFilter" onchange="loadReviews(1)" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Reviews</option>
+                            <option value="pending">Pending Approval</option>
+                            <option value="approved">Approved</option>
+                        </select>
                     </div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                            <i class="fas fa-thumbs-up text-white text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Total Reviews</p>
-                            <p class="text-2xl font-bold text-gray-900">287</p>
-                            <p class="text-sm text-green-600">+15 this week</p>
-                        </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                        <select id="ratingFilter" onchange="loadReviews(1)" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Ratings</option>
+                            <option value="5">5 Stars</option>
+                            <option value="4">4 Stars</option>
+                            <option value="3">3 Stars</option>
+                            <option value="2">2 Stars</option>
+                            <option value="1">1 Star</option>
+                        </select>
                     </div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                            <i class="fas fa-clock text-white text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Pending Responses</p>
-                            <p class="text-2xl font-bold text-gray-900">12</p>
-                            <p class="text-sm text-red-600">Needs attention</p>
-                        </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Product</label>
+                        <select id="productFilter" onchange="loadReviews(1)" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Products</option>
+                        </select>
                     </div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
-                            <i class="fas fa-chart-line text-white text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Response Rate</p>
-                            <p class="text-2xl font-bold text-gray-900">94%</p>
-                            <p class="text-sm text-green-600">Excellent</p>
-                        </div>
+                    
+                    <div class="flex items-end">
+                        <button onclick="loadReviews(1)" 
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-search mr-2"></i>Filter
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Rating Breakdown -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Rating Distribution</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center">
-                            <span class="text-sm w-8">5★</span>
-                            <div class="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                                <div class="bg-yellow-400 h-2 rounded-full" style="width: 65%"></div>
-                            </div>
-                            <span class="text-sm text-gray-600 w-12">187</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="text-sm w-8">4★</span>
-                            <div class="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                                <div class="bg-yellow-400 h-2 rounded-full" style="width: 20%"></div>
-                            </div>
-                            <span class="text-sm text-gray-600 w-12">57</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="text-sm w-8">3★</span>
-                            <div class="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                                <div class="bg-yellow-400 h-2 rounded-full" style="width: 10%"></div>
-                            </div>
-                            <span class="text-sm text-gray-600 w-12">28</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="text-sm w-8">2★</span>
-                            <div class="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                                <div class="bg-yellow-400 h-2 rounded-full" style="width: 3%"></div>
-                            </div>
-                            <span class="text-sm text-gray-600 w-12">9</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="text-sm w-8">1★</span>
-                            <div class="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                                <div class="bg-yellow-400 h-2 rounded-full" style="width: 2%"></div>
-                            </div>
-                            <span class="text-sm text-gray-600 w-12">6</span>
-                        </div>
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6" id="statsCards">
+                <!-- Loading stats -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="animate-pulse">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div class="h-8 bg-gray-200 rounded"></div>
                     </div>
                 </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Top Reviewed Products</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=50&h=50&fit=crop" alt="Product" class="w-12 h-12 rounded object-cover">
-                                <div class="ml-3">
-                                    <p class="font-medium text-gray-900">Premium Sneakers</p>
-                                    <div class="flex items-center">
-                                        <div class="flex text-yellow-400 text-sm">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                        </div>
-                                        <span class="text-sm text-gray-600 ml-1">(89 reviews)</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="text-beige font-semibold">4.9</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=50&h=50&fit=crop" alt="Product" class="w-12 h-12 rounded object-cover">
-                                <div class="ml-3">
-                                    <p class="font-medium text-gray-900">Classic Watch</p>
-                                    <div class="flex items-center">
-                                        <div class="flex text-yellow-400 text-sm">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star-half-alt"></i>
-                                        </div>
-                                        <span class="text-sm text-gray-600 ml-1">(67 reviews)</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="text-beige font-semibold">4.6</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=50&h=50&fit=crop" alt="Product" class="w-12 h-12 rounded object-cover">
-                                <div class="ml-3">
-                                    <p class="font-medium text-gray-900">Designer Sunglasses</p>
-                                    <div class="flex items-center">
-                                        <div class="flex text-yellow-400 text-sm">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="far fa-star"></i>
-                                        </div>
-                                        <span class="text-sm text-gray-600 ml-1">(43 reviews)</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="text-beige font-semibold">4.2</span>
-                        </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="animate-pulse">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div class="h-8 bg-gray-200 rounded"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="animate-pulse">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div class="h-8 bg-gray-200 rounded"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="animate-pulse">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div class="h-8 bg-gray-200 rounded"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Reviews List -->
-            <div class="bg-white rounded-lg shadow-md">
+            <div class="bg-white rounded-lg shadow-sm">
                 <div class="p-6 border-b border-gray-200">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <h3 class="text-lg font-semibold text-gray-800">Recent Reviews</h3>
-                        <div class="flex gap-2">
-                            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
-                                <option>All Reviews</option>
-                                <option>5 Stars</option>
-                                <option>4 Stars</option>
-                                <option>3 Stars</option>
-                                <option>2 Stars</option>
-                                <option>1 Star</option>
-                            </select>
-                            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-beige">
-                                <option>All Products</option>
-                                <option>Premium Sneakers</option>
-                                <option>Classic Watch</option>
-                                <option>Designer Sunglasses</option>
-                            </select>
-                        </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Recent Reviews</h2>
+                </div>
+                
+                <div id="reviewsContainer" class="p-6">
+                    <!-- Loading state -->
+                    <div class="flex justify-center items-center py-12">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span class="ml-2 text-gray-600">Loading reviews...</span>
                     </div>
                 </div>
-
-                <div class="divide-y divide-gray-200">
-                    <!-- Review 1 -->
-                    <div class="p-6">
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex items-center">
-                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=50&h=50&fit=crop&crop=face" alt="Customer" class="w-12 h-12 rounded-full">
-                                <div class="ml-4">
-                                    <h4 class="font-semibold text-gray-900">Sarah Johnson</h4>
-                                    <p class="text-sm text-gray-600">Verified Purchase • 2 days ago</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="flex text-yellow-400 mr-2">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                </div>
-                                <span class="text-sm text-gray-600">5.0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <p class="text-sm text-gray-600 mb-2">Product: <span class="font-medium text-gray-900">Premium Sneakers</span></p>
-                            <p class="text-gray-700">"Absolutely love these sneakers! They're incredibly comfortable and the quality is outstanding. Perfect for daily wear and they look great with any outfit. Highly recommend!"</p>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <button class="text-gray-500 hover:text-gray-700 flex items-center">
-                                    <i class="fas fa-thumbs-up mr-1"></i>
-                                    <span class="text-sm">Helpful (12)</span>
-                                </button>
-                                <button class="text-beige hover:text-beige-dark">
-                                    <i class="fas fa-reply mr-1"></i>
-                                    <span class="text-sm">Reply</span>
-                                </button>
-                            </div>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                Responded
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Review 2 -->
-                    <div class="p-6">
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex items-center">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face" alt="Customer" class="w-12 h-12 rounded-full">
-                                <div class="ml-4">
-                                    <h4 class="font-semibold text-gray-900">Mike Chen</h4>
-                                    <p class="text-sm text-gray-600">Verified Purchase • 1 week ago</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="flex text-yellow-400 mr-2">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="far fa-star"></i>
-                                </div>
-                                <span class="text-sm text-gray-600">4.0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <p class="text-sm text-gray-600 mb-2">Product: <span class="font-medium text-gray-900">Classic Watch</span></p>
-                            <p class="text-gray-700">"Good watch overall. The design is elegant and it keeps time well. Only minor complaint is the strap could be a bit more comfortable, but otherwise very satisfied with the purchase."</p>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <button class="text-gray-500 hover:text-gray-700 flex items-center">
-                                    <i class="fas fa-thumbs-up mr-1"></i>
-                                    <span class="text-sm">Helpful (8)</span>
-                                </button>
-                                <button class="text-beige hover:text-beige-dark">
-                                    <i class="fas fa-reply mr-1"></i>
-                                    <span class="text-sm">Reply</span>
-                                </button>
-                            </div>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                Pending
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Review 3 -->
-                    <div class="p-6">
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex items-center">
-                                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face" alt="Customer" class="w-12 h-12 rounded-full">
-                                <div class="ml-4">
-                                    <h4 class="font-semibold text-gray-900">Emma Davis</h4>
-                                    <p class="text-sm text-gray-600">Verified Purchase • 2 weeks ago</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="flex text-yellow-400 mr-2">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="far fa-star"></i>
-                                    <i class="far fa-star"></i>
-                                    <i class="far fa-star"></i>
-                                </div>
-                                <span class="text-sm text-gray-600">2.0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <p class="text-sm text-gray-600 mb-2">Product: <span class="font-medium text-gray-900">Designer Sunglasses</span></p>
-                            <p class="text-gray-700">"Unfortunately, these sunglasses didn't meet my expectations. The frame feels a bit flimsy and the lenses scratch easily. Expected better quality for the price point."</p>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <button class="text-gray-500 hover:text-gray-700 flex items-center">
-                                    <i class="fas fa-thumbs-up mr-1"></i>
-                                    <span class="text-sm">Helpful (3)</span>
-                                </button>
-                                <button class="text-beige hover:text-beige-dark">
-                                    <i class="fas fa-reply mr-1"></i>
-                                    <span class="text-sm">Reply</span>
-                                </button>
-                            </div>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                Needs Response
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
+                
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
-                        Showing 1 to 3 of 287 reviews
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Previous</button>
-                        <button class="px-3 py-2 text-sm bg-beige text-white rounded-lg">1</button>
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">2</button>
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">3</button>
-                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Next</button>
-                    </div>
+                <div id="pagination" class="p-6 border-t border-gray-200">
+                    <!-- Pagination will be loaded here -->
                 </div>
             </div>
         </div>
     </main>
+
+<!-- Response Modal -->
+<div id="responseModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Respond to Review</h3>
+                    <button onclick="closeResponseModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="reviewDetails" class="mb-4">
+                    <!-- Review details will be shown here -->
+                </div>
+                <form id="responseForm" onsubmit="submitResponse(event)">
+                    <input type="hidden" id="responseReviewId">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Your Response</label>
+                        <textarea id="responseText" rows="4" required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Write a professional response to this review..."></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeResponseModal()" 
+                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Submit Response
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/seller-api.js"></script>
+<script>
+let currentPage = 1;
+let currentFilters = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProducts();
+    loadReviews(1);
+    loadStats();
+});
+
+async function loadProducts() {
+    try {
+        const response = await sellerAPI.products.getAll({ limit: 100 });
+        if (response.success) {
+            const select = document.getElementById('productFilter');
+            response.data.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = product.name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load products:', error);
+    }
+}
+
+async function loadStats() {
+    try {
+        const response = await sellerAPI.get('/reviews', { limit: 1000 });
+        if (response.success) {
+            const reviews = response.data;
+            const total = reviews.length;
+            const pending = reviews.filter(r => !r.is_approved).length;
+            const approved = reviews.filter(r => r.is_approved).length;
+            const avgRating = reviews.length > 0 
+                ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+                : 0;
+
+            document.getElementById('statsCards').innerHTML = `
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <i class="fas fa-star text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Total Reviews</p>
+                            <p class="text-2xl font-bold text-gray-900">${total}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-yellow-100 rounded-lg">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Pending</p>
+                            <p class="text-2xl font-bold text-gray-900">${pending}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-green-100 rounded-lg">
+                            <i class="fas fa-check text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Approved</p>
+                            <p class="text-2xl font-bold text-gray-900">${approved}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                            <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Avg Rating</p>
+                            <p class="text-2xl font-bold text-gray-900">${avgRating}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+async function loadReviews(page = 1) {
+    currentPage = page;
+    
+    const filters = {
+        page: page,
+        limit: 10,
+        status: document.getElementById('statusFilter').value,
+        rating: document.getElementById('ratingFilter').value,
+        product_id: document.getElementById('productFilter').value
+    };
+    
+    currentFilters = filters;
+    
+    document.getElementById('reviewsContainer').innerHTML = `
+        <div class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="ml-2 text-gray-600">Loading reviews...</span>
+        </div>
+    `;
+    
+    try {
+        const response = await sellerAPI.get('/reviews', filters);
+        
+        if (response.success) {
+            renderReviews(response.data);
+            renderPagination(response.pagination);
+        } else {
+            showError('Failed to load reviews: ' + response.message);
+        }
+    } catch (error) {
+        showError('Failed to load reviews');
+        console.error('Error:', error);
+    }
+}
+
+function renderReviews(reviews) {
+    const container = document.getElementById('reviewsContainer');
+    
+    if (reviews.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <i class="fas fa-star text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No reviews found</h3>
+                <p class="text-gray-500">No reviews match your current filters.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const reviewsHTML = reviews.map(review => `
+        <div class="border border-gray-200 rounded-lg p-6 mb-4 hover:shadow-md transition-all">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        ${review.customer_name.charAt(0)}
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">${review.customer_name}</h4>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <div class="text-yellow-400">${generateStars(review.rating)}</div>
+                            <span class="text-sm text-gray-500">${new Date(review.created_at).toLocaleDateString()}</span>
+                            ${review.is_verified_purchase ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Verified Purchase</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        review.is_approved 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                    }">
+                        ${review.is_approved ? 'Approved' : 'Pending'}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <h5 class="font-medium text-gray-900 mb-2">${review.title}</h5>
+                <p class="text-gray-700">${review.review_text || 'No additional comments'}</p>
+            </div>
+            
+            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                <span>Product: <strong>${review.product_name}</strong></span>
+                ${review.order_number ? `<span>Order: <strong>#${review.order_number}</strong></span>` : ''}
+            </div>
+            
+            ${review.seller_response ? `
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-reply text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-800"><strong>Your Response:</strong></p>
+                            <p class="text-sm text-blue-700 mt-1">${review.seller_response}</p>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            
+            <div class="flex space-x-2">
+                ${!review.is_approved ? `
+                    <button onclick="approveReview(${review.id})" 
+                            class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors">
+                        <i class="fas fa-check mr-1"></i>Approve
+                    </button>
+                ` : `
+                    <button onclick="rejectReview(${review.id})" 
+                            class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
+                        <i class="fas fa-times mr-1"></i>Reject
+                    </button>
+                `}
+                
+                ${!review.seller_response ? `
+                    <button onclick="showResponseModal(${review.id}, '${review.customer_name.replace(/'/g, "\\'")}', '${review.title.replace(/'/g, "\\'")} ')" 
+                            class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-reply mr-1"></i>Respond
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = reviewsHTML;
+}
+
+function renderPagination(pagination) {
+    const container = document.getElementById('pagination');
+    
+    if (!pagination || pagination.total_pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '<div class="flex items-center justify-center space-x-2">';
+    
+    if (pagination.has_prev) {
+        paginationHTML += `
+            <button onclick="loadReviews(${pagination.current_page - 1})" 
+                    class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+    }
+    
+    const startPage = Math.max(1, pagination.current_page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === pagination.current_page;
+        paginationHTML += `
+            <button onclick="loadReviews(${i})" 
+                    class="px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-blue-600 text-white' : 'border border-gray-300 hover:bg-gray-50'}">
+                ${i}
+            </button>
+        `;
+    }
+    
+    if (pagination.has_next) {
+        paginationHTML += `
+            <button onclick="loadReviews(${pagination.current_page + 1})" 
+                    class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+    }
+    
+    paginationHTML += '</div>';
+    container.innerHTML = paginationHTML;
+}
+
+function generateStars(rating) {
+    let starsHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            starsHTML += '<i class="fas fa-star"></i>';
+        } else {
+            starsHTML += '<i class="far fa-star"></i>';
+        }
+    }
+    return starsHTML;
+}
+
+async function approveReview(reviewId) {
+    if (!confirm('Are you sure you want to approve this review?')) {
+        return;
+    }
+    
+    try {
+        const response = await sellerAPI.put('/reviews', {
+            review_id: reviewId,
+            action: 'approve'
+        });
+        
+        if (response.success) {
+            showSuccess(response.message);
+            loadReviews(currentPage);
+            loadStats();
+        } else {
+            showError(response.message);
+        }
+    } catch (error) {
+        showError('Failed to approve review');
+        console.error('Error:', error);
+    }
+}
+
+async function rejectReview(reviewId) {
+    if (!confirm('Are you sure you want to reject this review?')) {
+        return;
+    }
+    
+    try {
+        const response = await sellerAPI.put('/reviews', {
+            review_id: reviewId,
+            action: 'reject'
+        });
+        
+        if (response.success) {
+            showSuccess(response.message);
+            loadReviews(currentPage);
+            loadStats();
+        } else {
+            showError(response.message);
+        }
+    } catch (error) {
+        showError('Failed to reject review');
+        console.error('Error:', error);
+    }
+}
+
+function showResponseModal(reviewId, customerName, reviewTitle) {
+    document.getElementById('responseReviewId').value = reviewId;
+    document.getElementById('reviewDetails').innerHTML = `
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="font-medium text-gray-900">Review by ${customerName}</h4>
+            <p class="text-gray-700 mt-1">"${reviewTitle}"</p>
+        </div>
+    `;
+    document.getElementById('responseText').value = '';
+    document.getElementById('responseModal').classList.remove('hidden');
+}
+
+function closeResponseModal() {
+    document.getElementById('responseModal').classList.add('hidden');
+}
+
+async function submitResponse(event) {
+    event.preventDefault();
+    
+    const reviewId = document.getElementById('responseReviewId').value;
+    const responseText = document.getElementById('responseText').value.trim();
+    
+    if (!responseText) {
+        showError('Response cannot be empty');
+        return;
+    }
+    
+    try {
+        const response = await sellerAPI.put('/reviews', {
+            review_id: reviewId,
+            action: 'respond',
+            response: responseText
+        });
+        
+        if (response.success) {
+            showSuccess(response.message);
+            closeResponseModal();
+            loadReviews(currentPage);
+        } else {
+            showError(response.message);
+        }
+    } catch (error) {
+        showError('Failed to submit response');
+        console.error('Error:', error);
+    }
+}
+
+function showSuccess(message) {
+    const toast = createToast(message, 'success');
+    document.body.appendChild(toast);
+    setTimeout(() => document.body.removeChild(toast), 3000);
+}
+
+function showError(message) {
+    const toast = createToast(message, 'error');
+    document.body.appendChild(toast);
+    setTimeout(() => document.body.removeChild(toast), 3000);
+}
+
+function createToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-x-full opacity-0 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    toast.textContent = message;
+    
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full', 'opacity-0');
+        toast.classList.add('translate-x-0', 'opacity-100');
+    }, 10);
+    
+    return toast;
+}
+</script>
 
 <?php include 'includes/footer.php'; ?>

@@ -55,7 +55,11 @@ try {
                     'GET /addresses' => 'Get customer addresses',
                     'POST /addresses' => 'Add new address',
                     'PUT /addresses/{id}' => 'Update address',
-                    'DELETE /addresses/{id}' => 'Delete address'
+                    'DELETE /addresses/{id}' => 'Delete address',
+                    'GET /reviews' => 'Get reviews (product or user reviews)',
+                    'POST /reviews' => 'Submit a new review',
+                    'PUT /reviews' => 'Update a review',
+                    'DELETE /reviews' => 'Delete a review'
                 ]
             ]);
             break;
@@ -94,6 +98,10 @@ try {
             
         case 'notifications':
             require_once 'notifications.php';
+            break;
+            
+        case 'reviews':
+            require_once 'reviews.php';
             break;
             
         default:
