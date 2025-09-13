@@ -5,10 +5,11 @@ $page_title = "Dashboard";
 require_once 'config/database.php';
 require_once 'includes/auth.php';
 require_once 'includes/order.php';
+require_once 'includes/layout.php';
 
 // Initialize authentication
 $auth = new SellerAuth($pdo);
-$auth->requireLogin();
+$auth->requireWebLogin();
 
 $sellerId = $_SESSION['seller_id'];
 
@@ -67,37 +68,10 @@ $monthlyRevenueStmt = $pdo->prepare("
 ");
 $monthlyRevenueStmt->execute([$sellerId]);
 $monthlyRevenue = $monthlyRevenueStmt->fetch()['month_revenue'] ?? 0;
+
+// Start layout
+startLayout('Dashboard');
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Lumino Ecommerce</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'beige': '#b48d6b',
-                        'beige-light': '#c8a382',
-                        'beige-dark': '#9d7a5a',
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 font-sans">
-<?php include 'includes/header.php'; ?>
-
-<?php include 'includes/sidebar.php'; ?>
-
-    <!-- Main Content -->
-    <main class="lg:ml-64 pt-20 min-h-screen">
         <div class="p-6">
             <!-- Page Header -->
             <div class="mb-8">
@@ -298,8 +272,4 @@ $monthlyRevenue = $monthlyRevenueStmt->fetch()['month_revenue'] ?? 0;
                 </div>
             </div>
         </div>
-    </main>
-
-    <?php include 'includes/footer.php'; ?>
-</body>
-</html>
+<?php endLayout(); ?>

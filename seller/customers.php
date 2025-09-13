@@ -1,5 +1,72 @@
 <?php
 $page_title = "Customers";
+require_once 'config/database.php';
+
+// Get customer statistics
+$stats_query = "
+    SELECT 
+        COUNT(DISTINCT u.id) as total_customers,
+        COUNT(DISTINCT CASE WHEN u.created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH) THEN u.id END) as new_this_month,
+        COUNT(DISTINCT CASE WHEN o.id IS NOT NULL THEN o.user_id END) as returning_customers,
+        COUNT(DISTINCT CASE WHEN customer_stats.total_spent >= 1000 THEN customer_stats.user_id END) as vip_customers
+    FROM users u 
+    LEFT JOIN orders o ON u.id = o.user_id 
+    LEFT JOIN (
+        SELECT user_id, SUM(total_amount) as total_spent
+        FROM orders 
+        WHERE status != 'cancelled'
+        GROUP BY user_id
+    ) customer_stats ON u.id = customer_stats.user_id
+    WHERE u.status = 'active'
+";
+$stats = $pdo->query($stats_query)->fetch();
+
+// Get customers with their order statistics
+$customers_query = "
+    SELECT 
+        u.id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.profile_image,
+        u.created_at,
+        COUNT(o.id) as total_orders,
+        COALESCE(SUM(CASE WHEN o.status != 'cancelled' THEN o.total_amount ELSE 0 END), 0) as total_spent,
+        MAX(o.created_at) as last_order_date,
+        CASE 
+            WHEN COALESCE(SUM(CASE WHEN o.status != 'cancelled' THEN o.total_amount ELSE 0 END), 0) >= 1000 THEN 'VIP Customer'
+            WHEN COUNT(o.id) > 0 THEN 'Regular Customer'
+            WHEN u.created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH) THEN 'New Customer'
+            ELSE 'Inactive'
+        END as customer_type
+    FROM users u 
+    LEFT JOIN orders o ON u.id = o.user_id AND o.status != 'cancelled'
+    WHERE u.status = 'active'
+    GROUP BY u.id, u.email, u.first_name, u.last_name, u.profile_image, u.created_at
+    ORDER BY total_spent DESC, total_orders DESC
+    LIMIT 12
+";
+$customers = $pdo->query($customers_query)->fetchAll();
+
+function getCustomerTypeClass($type) {
+    switch($type) {
+        case 'VIP Customer': return 'bg-yellow-100 text-yellow-800';
+        case 'Regular Customer': return 'bg-green-100 text-green-800';
+        case 'New Customer': return 'bg-blue-100 text-blue-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function formatCurrency($amount) {
+    return '₱' . number_format($amount, 2);
+}
+
+function getProfileImage($user) {
+    if ($user['profile_image']) {
+        return 'http://localhost' . $user['profile_image'];
+    }
+    return 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=d4a574&color=fff&size=64';
+}
 ?>
 <?php include 'includes/header.php'; ?>
 
@@ -23,7 +90,7 @@ $page_title = "Customers";
                         </div>
                         <div class="ml-4">
                             <p class="text-sm text-gray-600">Total Customers</p>
-                            <p class="text-2xl font-bold text-gray-900">2,345</p>
+                            <p class="text-2xl font-bold text-gray-900"><?= number_format($stats['total_customers']) ?></p>
                         </div>
                     </div>
                 </div>
@@ -34,7 +101,7 @@ $page_title = "Customers";
                         </div>
                         <div class="ml-4">
                             <p class="text-sm text-gray-600">New This Month</p>
-                            <p class="text-2xl font-bold text-gray-900">124</p>
+                            <p class="text-2xl font-bold text-gray-900"><?= number_format($stats['new_this_month']) ?></p>
                         </div>
                     </div>
                 </div>
@@ -45,7 +112,7 @@ $page_title = "Customers";
                         </div>
                         <div class="ml-4">
                             <p class="text-sm text-gray-600">Returning</p>
-                            <p class="text-2xl font-bold text-gray-900">856</p>
+                            <p class="text-2xl font-bold text-gray-900"><?= number_format($stats['returning_customers']) ?></p>
                         </div>
                     </div>
                 </div>
@@ -56,7 +123,7 @@ $page_title = "Customers";
                         </div>
                         <div class="ml-4">
                             <p class="text-sm text-gray-600">VIP Customers</p>
-                            <p class="text-2xl font-bold text-gray-900">67</p>
+                            <p class="text-2xl font-bold text-gray-900"><?= number_format($stats['vip_customers']) ?></p>
                         </div>
                     </div>
                 </div>
@@ -94,275 +161,70 @@ $page_title = "Customers";
 
             <!-- Customer Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Customer Card 1 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center mb-4">
-                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face" 
-                             alt="Customer" class="w-16 h-16 rounded-full">
-                        <div class="ml-4 flex-1">
-                            <h3 class="font-semibold text-gray-900">John Doe</h3>
-                            <p class="text-sm text-gray-600">john.doe@email.com</p>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 mt-1">
-                                VIP Customer
-                            </span>
-                        </div>
+                <?php if (empty($customers)): ?>
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-users text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">No Customers Yet</h3>
+                        <p class="text-gray-500">When customers place orders, they'll appear here.</p>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Orders</p>
-                            <p class="font-semibold text-gray-900">24</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Spent</p>
-                            <p class="font-semibold text-beige">$1,856</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Last Order</p>
-                            <p class="font-semibold text-gray-900">Jan 15, 2024</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Member Since</p>
-                            <p class="font-semibold text-gray-900">Mar 2023</p>
-                        </div>
-                    </div>
+                <?php else: ?>
+                    <?php foreach ($customers as $customer): ?>
+                        <!-- Customer Card -->
+                        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                            <div class="flex items-center mb-4">
+                                <img src="<?= htmlspecialchars(getProfileImage($customer)) ?>" 
+                                     alt="<?= htmlspecialchars($customer['first_name'] . ' ' . $customer['last_name']) ?>" 
+                                     class="w-16 h-16 rounded-full">
+                                <div class="ml-4 flex-1">
+                                    <h3 class="font-semibold text-gray-900">
+                                        <?= htmlspecialchars($customer['first_name'] . ' ' . $customer['last_name']) ?>
+                                    </h3>
+                                    <p class="text-sm text-gray-600"><?= htmlspecialchars($customer['email']) ?></p>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full <?= getCustomerTypeClass($customer['customer_type']) ?> mt-1">
+                                        <?= htmlspecialchars($customer['customer_type']) ?>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Total Orders</p>
+                                    <p class="font-semibold text-gray-900"><?= number_format($customer['total_orders']) ?></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Total Spent</p>
+                                    <p class="font-semibold text-beige"><?= formatCurrency($customer['total_spent']) ?></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Last Order</p>
+                                    <p class="font-semibold text-gray-900">
+                                        <?php if ($customer['last_order_date']): ?>
+                                            <?= date('M j, Y', strtotime($customer['last_order_date'])) ?>
+                                        <?php else: ?>
+                                            <span class="text-gray-400">Never</span>
+                                        <?php endif; ?>
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Member Since</p>
+                                    <p class="font-semibold text-gray-900"><?= date('M Y', strtotime($customer['created_at'])) ?></p>
+                                </div>
+                            </div>
 
-                    <div class="border-t pt-4">
-                        <div class="flex space-x-2">
-                            <button class="flex-1 btn-beige text-sm py-2">
-                                <i class="fas fa-eye mr-2"></i>View Profile
-                            </button>
-                            <button class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50">
-                                <i class="fas fa-envelope"></i>
-                            </button>
+                            <div class="border-t pt-4">
+                                <div class="flex space-x-2">
+                                    <button class="flex-1 btn-beige text-sm py-2" onclick="viewCustomer(<?= $customer['id'] ?>)">
+                                        <i class="fas fa-eye mr-2"></i>View Profile
+                                    </button>
+                                    <button class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50" 
+                                            onclick="contactCustomer('<?= htmlspecialchars($customer['email']) ?>')">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Customer Card 2 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center mb-4">
-                        <img src="https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=60&h=60&fit=crop&crop=face" 
-                             alt="Customer" class="w-16 h-16 rounded-full">
-                        <div class="ml-4 flex-1">
-                            <h3 class="font-semibold text-gray-900">Jane Smith</h3>
-                            <p class="text-sm text-gray-600">jane.smith@email.com</p>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 mt-1">
-                                Regular Customer
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Orders</p>
-                            <p class="font-semibold text-gray-900">8</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Spent</p>
-                            <p class="font-semibold text-beige">$456</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Last Order</p>
-                            <p class="font-semibold text-gray-900">Jan 14, 2024</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Member Since</p>
-                            <p class="font-semibold text-gray-900">Aug 2023</p>
-                        </div>
-                    </div>
-
-                    <div class="border-t pt-4">
-                        <div class="flex space-x-2">
-                            <button class="flex-1 btn-beige text-sm py-2">
-                                <i class="fas fa-eye mr-2"></i>View Profile
-                            </button>
-                            <button class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer Card 3 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center mb-4">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face" 
-                             alt="Customer" class="w-16 h-16 rounded-full">
-                        <div class="ml-4 flex-1">
-                            <h3 class="font-semibold text-gray-900">Bob Johnson</h3>
-                            <p class="text-sm text-gray-600">bob.johnson@email.com</p>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mt-1">
-                                New Customer
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Orders</p>
-                            <p class="font-semibold text-gray-900">2</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Spent</p>
-                            <p class="font-semibold text-beige">$189</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Last Order</p>
-                            <p class="font-semibold text-gray-900">Jan 13, 2024</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Member Since</p>
-                            <p class="font-semibold text-gray-900">Jan 2024</p>
-                        </div>
-                    </div>
-
-                    <div class="border-t pt-4">
-                        <div class="flex space-x-2">
-                            <button class="flex-1 btn-beige text-sm py-2">
-                                <i class="fas fa-eye mr-2"></i>View Profile
-                            </button>
-                            <button class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer Card 4 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center mb-4">
-                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face" 
-                             alt="Customer" class="w-16 h-16 rounded-full">
-                        <div class="ml-4 flex-1">
-                            <h3 class="font-semibold text-gray-900">Sarah Wilson</h3>
-                            <p class="text-sm text-gray-600">sarah.wilson@email.com</p>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 mt-1">
-                                VIP Customer
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Orders</p>
-                            <p class="font-semibold text-gray-900">31</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Spent</p>
-                            <p class="font-semibold text-beige">$2,145</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Last Order</p>
-                            <p class="font-semibold text-gray-900">Jan 12, 2024</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Member Since</p>
-                            <p class="font-semibold text-gray-900">Feb 2023</p>
-                        </div>
-                    </div>
-
-                    <div class="border-t pt-4">
-                        <div class="flex space-x-2">
-                            <button class="flex-1 btn-beige text-sm py-2">
-                                <i class="fas fa-eye mr-2"></i>View Profile
-                            </button>
-                            <button class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer Card 5 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center mb-4">
-                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop&crop=face" 
-                             alt="Customer" class="w-16 h-16 rounded-full">
-                        <div class="ml-4 flex-1">
-                            <h3 class="font-semibold text-gray-900">Mike Davis</h3>
-                            <p class="text-sm text-gray-600">mike.davis@email.com</p>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 mt-1">
-                                Regular Customer
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Orders</p>
-                            <p class="font-semibold text-gray-900">12</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Spent</p>
-                            <p class="font-semibold text-beige">$678</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Last Order</p>
-                            <p class="font-semibold text-gray-900">Jan 10, 2024</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Member Since</p>
-                            <p class="font-semibold text-gray-900">Jun 2023</p>
-                        </div>
-                    </div>
-
-                    <div class="border-t pt-4">
-                        <div class="flex space-x-2">
-                            <button class="flex-1 btn-beige text-sm py-2">
-                                <i class="fas fa-eye mr-2"></i>View Profile
-                            </button>
-                            <button class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer Card 6 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center mb-4">
-                        <img src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop&crop=face" 
-                             alt="Customer" class="w-16 h-16 rounded-full">
-                        <div class="ml-4 flex-1">
-                            <h3 class="font-semibold text-gray-900">Emily Brown</h3>
-                            <p class="text-sm text-gray-600">emily.brown@email.com</p>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 mt-1">
-                                Inactive
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Orders</p>
-                            <p class="font-semibold text-gray-900">5</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Spent</p>
-                            <p class="font-semibold text-beige">$234</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Last Order</p>
-                            <p class="font-semibold text-gray-900">Oct 15, 2023</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Member Since</p>
-                            <p class="font-semibold text-gray-900">May 2023</p>
-                        </div>
-                    </div>
-
-                    <div class="border-t pt-4">
-                        <div class="flex space-x-2">
-                            <button class="flex-1 btn-beige text-sm py-2">
-                                <i class="fas fa-eye mr-2"></i>View Profile
-                            </button>
-                            <button class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
 
             <!-- Pagination -->
@@ -377,5 +239,39 @@ $page_title = "Customers";
             </div>
         </div>
     </main>
+
+    <script>
+        function viewCustomer(customerId) {
+            // Navigate to customer profile page
+            window.location.href = 'customer-profile.php?id=' + customerId;
+        }
+
+        function contactCustomer(email) {
+            // Open email client with customer's email
+            window.location.href = 'mailto:' + email;
+        }
+
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('input[placeholder="Search customers..."]');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const customerCards = document.querySelectorAll('.grid > div:not(.col-span-full)');
+                    
+                    customerCards.forEach(card => {
+                        const customerName = card.querySelector('h3').textContent.toLowerCase();
+                        const customerEmail = card.querySelector('.text-gray-600').textContent.toLowerCase();
+                        
+                        if (customerName.includes(searchTerm) || customerEmail.includes(searchTerm)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 
 <?php include 'includes/footer.php'; ?>

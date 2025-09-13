@@ -105,9 +105,11 @@ class OrderManager {
             
             // Get order items for this seller
             $stmt = $this->pdo->prepare("
-                SELECT oi.*, p.name as product_name, p.image_url as product_image
+                SELECT oi.*, p.name as product_name, 
+                       pi.image_url as product_image
                 FROM order_items oi
                 LEFT JOIN products p ON oi.product_id = p.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE oi.order_id = ? AND oi.seller_id = ?
             ");
             $stmt->execute([$orderId, $sellerId]);

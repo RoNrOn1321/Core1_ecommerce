@@ -1,6 +1,7 @@
 <?php
 require_once 'config/database.php';
 require_once 'includes/auth.php';
+require_once 'includes/layout.php';
 
 $auth = new SellerAuth($pdo);
 
@@ -12,13 +13,10 @@ if (!$auth->isLoggedIn()) {
 
 $sellerInfo = $auth->getCurrentSeller();
 $page_title = "Products";
+
+// Start layout
+startLayout('Products');
 ?>
-<?php include 'includes/header.php'; ?>
-
-<?php include 'includes/sidebar.php'; ?>
-
-    <!-- Main Content -->
-    <main class="lg:ml-64 pt-20 min-h-screen">
         <div class="p-6">
             <!-- Page Header -->
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
@@ -842,4 +840,4 @@ $page_title = "Products";
         
     </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php endLayout(); ?>

@@ -1,8 +1,15 @@
 <?php
-session_start();
-require_once 'includes/auth.php';
-requireSellerAuth();
 $page_title = "Reviews";
+
+// Include necessary files
+require_once 'config/database.php';
+require_once 'includes/auth.php';
+
+// Initialize authentication
+$auth = new SellerAuth($pdo);
+$auth->requireWebLogin();
+
+$sellerId = $_SESSION['seller_id'];
 ?>
 <?php include 'includes/header.php'; ?>
 
@@ -155,12 +162,15 @@ $page_title = "Reviews";
     </div>
 </div>
 
-<script src="js/seller-api.js"></script>
 <script>
 let currentPage = 1;
 let currentFilters = {};
+let sellerAPI;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the API
+    sellerAPI = new SellerAPI();
+    
     loadProducts();
     loadReviews(1);
     loadStats();
@@ -168,15 +178,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadProducts() {
     try {
-        const response = await sellerAPI.products.getAll({ limit: 100 });
-        if (response.success) {
+        const response = await sellerAPI.getProducts({ limit: 100 });
+        console.log('Products API response:', response); // Debug log
+        if (response.success && response.products) {
             const select = document.getElementById('productFilter');
-            response.data.forEach(product => {
+            response.products.forEach(product => {
                 const option = document.createElement('option');
                 option.value = product.id;
                 option.textContent = product.name;
                 select.appendChild(option);
             });
+        } else {
+            console.warn('No products found or API error:', response);
         }
     } catch (error) {
         console.error('Failed to load products:', error);
@@ -185,8 +198,9 @@ async function loadProducts() {
 
 async function loadStats() {
     try {
-        const response = await sellerAPI.get('/reviews', { limit: 1000 });
-        if (response.success) {
+        const response = await sellerAPI.get('/reviews/', { limit: 1000 });
+        console.log('Reviews stats API response:', response); // Debug log
+        if (response.success && response.data) {
             const reviews = response.data;
             const total = reviews.length;
             const pending = reviews.filter(r => !r.is_approved).length;
@@ -244,6 +258,8 @@ async function loadStats() {
                     </div>
                 </div>
             `;
+        } else {
+            console.warn('No stats data found or API error:', response);
         }
     } catch (error) {
         console.error('Failed to load stats:', error);
@@ -271,7 +287,7 @@ async function loadReviews(page = 1) {
     `;
     
     try {
-        const response = await sellerAPI.get('/reviews', filters);
+        const response = await sellerAPI.get('/reviews/', filters);
         
         if (response.success) {
             renderReviews(response.data);
@@ -440,7 +456,7 @@ async function approveReview(reviewId) {
     }
     
     try {
-        const response = await sellerAPI.put('/reviews', {
+        const response = await sellerAPI.put('/reviews/', {
             review_id: reviewId,
             action: 'approve'
         });
@@ -464,7 +480,7 @@ async function rejectReview(reviewId) {
     }
     
     try {
-        const response = await sellerAPI.put('/reviews', {
+        const response = await sellerAPI.put('/reviews/', {
             review_id: reviewId,
             action: 'reject'
         });
@@ -510,7 +526,7 @@ async function submitResponse(event) {
     }
     
     try {
-        const response = await sellerAPI.put('/reviews', {
+        const response = await sellerAPI.put('/reviews/', {
             review_id: reviewId,
             action: 'respond',
             response: responseText

@@ -111,6 +111,13 @@ class SellerAuth {
         }
     }
     
+    public function requireWebLogin() {
+        if (!$this->isLoggedIn()) {
+            header('Location: login.php');
+            exit;
+        }
+    }
+    
     public function logout() {
         // Clear seller-specific session variables
         unset($_SESSION['seller_id']);

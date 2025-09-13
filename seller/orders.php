@@ -5,6 +5,7 @@ $page_title = "Orders";
 require_once 'config/database.php';
 require_once 'includes/auth.php';
 require_once 'includes/order.php';
+require_once 'includes/layout.php';
 
 // Initialize authentication
 $auth = new SellerAuth($pdo);
@@ -30,13 +31,10 @@ $statsResult = $orderManager->getOrderStats($sellerId);
 
 $orders = $ordersResult['success'] ? $ordersResult['orders'] : [];
 $stats = $statsResult['success'] ? $statsResult['stats'] : ['by_status' => []];
+
+// Start layout
+startLayout('Orders');
 ?>
-<?php include 'includes/header.php'; ?>
-
-<?php include 'includes/sidebar.php'; ?>
-
-    <!-- Main Content -->
-    <main class="lg:ml-64 pt-20 min-h-screen">
         <div class="p-6">
             <!-- Page Header -->
             <div class="mb-8">
@@ -214,9 +212,9 @@ $stats = $statsResult['success'] ? $statsResult['stats'] : ['by_status' => []];
 
                             <div class="mt-4 lg:mt-0 lg:ml-6">
                                 <div class="flex flex-col space-y-2">
-                                    <a href="api/orders/detail.php?id=<?php echo $order['id']; ?>" class="btn-beige text-sm px-4 py-2 text-center">
+                                    <button onclick="viewOrderDetails(<?php echo $order['id']; ?>)" class="btn-beige text-sm px-4 py-2">
                                         <i class="fas fa-eye mr-2"></i>View Details
-                                    </a>
+                                    </button>
                                     
                                     <?php if ($order['status'] == 'pending' || $order['status'] == 'processing'): ?>
                                         <button onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'shipped')" class="btn-beige-outline text-sm px-4 py-2">
@@ -277,40 +275,347 @@ $stats = $statsResult['success'] ? $statsResult['stats'] : ['by_status' => []];
             </div>
             <?php endif; ?>
         </div>
-    </main>
 
-    <script>
-    async function updateOrderStatus(orderId, status) {
-        if (!confirm(`Are you sure you want to mark this order as ${status}?`)) {
-            return;
-        }
+<!-- Order Details Modal -->
+<div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800">Order Details</h2>
+            <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
         
-        try {
-            const response = await fetch('api/orders/status.php', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    order_id: orderId,
-                    status: status
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('Order status updated successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Error updating order status:', error);
-            alert('An error occurred while updating the order status.');
-        }
-    }
-    </script>
+        <!-- Modal Content -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div id="orderDetailsContent">
+                <div class="flex items-center justify-center py-12">
+                    <i class="fas fa-spinner fa-spin text-3xl text-beige mr-3"></i>
+                    <span class="text-lg text-gray-600">Loading order details...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<?php include 'includes/footer.php'; ?>
+<script>
+async function updateOrderStatus(orderId, status) {
+    if (!confirm(`Are you sure you want to mark this order as ${status}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('api/orders/status.php', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                order_id: orderId,
+                status: status
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Order status updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        alert('An error occurred while updating the order status.');
+    }
+}
+
+// Order Details Modal Functions
+async function viewOrderDetails(orderId) {
+    const modal = document.getElementById('orderDetailsModal');
+    const content = document.getElementById('orderDetailsContent');
+    
+    // Show modal and reset content
+    modal.classList.remove('hidden');
+    content.innerHTML = `
+        <div class="flex items-center justify-center py-12">
+            <i class="fas fa-spinner fa-spin text-3xl text-beige mr-3"></i>
+            <span class="text-lg text-gray-600">Loading order details...</span>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`api/orders/detail.php?id=${orderId}`, {
+            credentials: 'include'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            displayOrderDetails(result.data);
+        } else {
+            content.innerHTML = `
+                <div class="text-center py-12">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-red-600 mb-2">Error Loading Order</h3>
+                    <p class="text-gray-600">${result.message}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        content.innerHTML = `
+            <div class="text-center py-12">
+                <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+                <h3 class="text-lg font-semibold text-red-600 mb-2">Connection Error</h3>
+                <p class="text-gray-600">Failed to load order details. Please try again.</p>
+            </div>
+        `;
+    }
+}
+
+function displayOrderDetails(order) {
+    const content = document.getElementById('orderDetailsContent');
+    
+    const statusColors = {
+        'pending': 'bg-blue-100 text-blue-800',
+        'processing': 'bg-yellow-100 text-yellow-800',
+        'shipped': 'bg-purple-100 text-purple-800',
+        'delivered': 'bg-green-100 text-green-800',
+        'cancelled': 'bg-red-100 text-red-800',
+        'refunded': 'bg-gray-100 text-gray-800'
+    };
+    
+    content.innerHTML = `
+        <!-- Order Header -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800">${order.order_number}</h3>
+                    <p class="text-gray-600 mt-1">Placed on ${new Date(order.created_at).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                    <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}">
+                        ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </span>
+                    <span class="text-2xl font-bold text-beige">₱${parseFloat(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Customer Information -->
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-user text-beige mr-2"></i>
+                    Customer Information
+                </h4>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-600">Name</p>
+                        <p class="font-medium">${order.first_name} ${order.last_name}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Email</p>
+                        <p class="font-medium">${order.email}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Phone</p>
+                        <p class="font-medium">${order.phone || 'Not provided'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-credit-card text-beige mr-2"></i>
+                    Payment Information
+                </h4>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-600">Payment Method</p>
+                        <p class="font-medium">${order.payment_method.toUpperCase()}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Payment Status</p>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+                        </span>
+                    </div>
+                    ${order.payment_reference ? `
+                        <div>
+                            <p class="text-sm text-gray-600">Reference</p>
+                            <p class="font-mono text-sm">${order.payment_reference}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Address -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+            <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-shipping-fast text-beige mr-2"></i>
+                Shipping Address
+            </h4>
+            <div class="text-gray-700">
+                <p class="font-medium">${order.shipping_first_name} ${order.shipping_last_name}</p>
+                ${order.shipping_company ? `<p>${order.shipping_company}</p>` : ''}
+                <p>${order.shipping_address_1}</p>
+                ${order.shipping_address_2 ? `<p>${order.shipping_address_2}</p>` : ''}
+                <p>${order.shipping_city}, ${order.shipping_state} ${order.shipping_postal_code}</p>
+                ${order.shipping_country ? `<p>${order.shipping_country}</p>` : ''}
+                ${order.shipping_phone ? `<p class="mt-2"><i class="fas fa-phone text-beige mr-1"></i> ${order.shipping_phone}</p>` : ''}
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+            <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-box text-beige mr-2"></i>
+                Order Items
+            </h4>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        ${order.items.map(item => `
+                            <tr>
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center">
+                                        ${item.product_image ? `
+                                            <img src="${item.product_image}" alt="${item.product_name}" 
+                                                 class="w-16 h-16 object-cover rounded-lg mr-4"
+                                                 onerror="this.style.display='none'">
+                                        ` : ''}
+                                        <div>
+                                            <p class="font-medium text-gray-900">${item.product_name}</p>
+                                            ${item.product_sku ? `<p class="text-sm text-gray-500">SKU: ${item.product_sku}</p>` : ''}
+                                            ${item.variant_details ? `<p class="text-sm text-gray-500">${item.variant_details}</p>` : ''}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 text-gray-900">${item.quantity}</td>
+                                <td class="px-4 py-4 text-gray-900">₱${parseFloat(item.unit_price).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                                <td class="px-4 py-4 font-medium text-gray-900">₱${parseFloat(item.total_price).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+            <h4 class="text-lg font-semibold text-gray-800 mb-4">Order Summary</h4>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span>₱${parseFloat(order.subtotal).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Shipping</span>
+                    <span>₱${parseFloat(order.shipping_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Tax</span>
+                    <span>₱${parseFloat(order.tax_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                </div>
+                ${order.discount_amount > 0 ? `
+                    <div class="flex justify-between text-green-600">
+                        <span>Discount</span>
+                        <span>-₱${parseFloat(order.discount_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                    </div>
+                ` : ''}
+                <div class="border-t pt-2">
+                    <div class="flex justify-between text-lg font-bold">
+                        <span>Total</span>
+                        <span class="text-beige">₱${parseFloat(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status History -->
+        ${order.status_history && order.status_history.length > 0 ? `
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-history text-beige mr-2"></i>
+                    Order History
+                </h4>
+                <div class="space-y-4">
+                    ${order.status_history.map((history, index) => `
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-3 h-3 rounded-full ${index === 0 ? 'bg-beige' : 'bg-gray-300'}"></div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-medium text-gray-900 capitalize">${history.status}</p>
+                                    <p class="text-sm text-gray-500">${new Date(history.created_at).toLocaleString()}</p>
+                                </div>
+                                ${history.notes ? `<p class="text-sm text-gray-600 mt-1">${history.notes}</p>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex justify-end space-x-4">
+            ${order.status === 'pending' || order.status === 'processing' ? `
+                <button onclick="updateOrderStatusFromModal(${order.id}, 'shipped')" class="btn-beige">
+                    <i class="fas fa-truck mr-2"></i>Mark as Shipped
+                </button>
+            ` : ''}
+            ${order.status === 'shipped' ? `
+                <button onclick="updateOrderStatusFromModal(${order.id}, 'delivered')" class="btn-beige">
+                    <i class="fas fa-check mr-2"></i>Mark as Delivered
+                </button>
+            ` : ''}
+            ${order.status !== 'cancelled' && order.status !== 'delivered' ? `
+                <button onclick="updateOrderStatusFromModal(${order.id}, 'cancelled')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    <i class="fas fa-times mr-2"></i>Cancel Order
+                </button>
+            ` : ''}
+        </div>
+    `;
+}
+
+function closeOrderModal() {
+    document.getElementById('orderDetailsModal').classList.add('hidden');
+}
+
+async function updateOrderStatusFromModal(orderId, status) {
+    if (await updateOrderStatus(orderId, status)) {
+        // Refresh the modal content
+        setTimeout(() => viewOrderDetails(orderId), 1000);
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('orderDetailsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeOrderModal();
+    }
+});
+</script>
+
+<?php endLayout(); ?>

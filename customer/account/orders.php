@@ -154,6 +154,59 @@ $orderId = $_GET['order'] ?? null;
     </div>
 </div>
 
+<!-- Edit Review Modal -->
+<div id="editReviewModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-900">Edit Review</h2>
+                    <button onclick="closeEditReviewModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="editReviewModalContent" class="p-6">
+                <!-- Edit review form will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-semibold text-gray-900">Delete Review</h3>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <p class="text-gray-600">Are you sure you want to delete this review? This action cannot be undone.</p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeDeleteConfirmModal()" 
+                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDeleteReview()" 
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        <i class="fas fa-trash mr-2"></i>
+                        Delete Review
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="../assets/js/customer-api.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -535,25 +588,45 @@ function showSuccess(message) {
 // Review Modal Functions
 async function showReviewModal(orderId) {
     try {
-        const response = await customerAPI.reviews.getReviewableItems(orderId);
+        console.log('Loading review modal for order:', orderId);
+        
+        // Add cache busting parameter to force fresh data
+        const timestamp = Date.now();
+        const response = await customerAPI.get('/reviews/list', { 
+            order_id: orderId,
+            _t: timestamp // Cache buster
+        });
+        
+        console.log('Review API response:', response);
         
         if (response.success) {
+            console.log('Review data:', response.data);
+            // Log detailed information about each item
+            response.data.forEach((item, index) => {
+                console.log(`Item ${index}:`, {
+                    product_name: item.product_name,
+                    review_id: item.review_id,
+                    has_review: item.review_id !== null,
+                    rating: item.rating,
+                    review_title: item.review_title
+                });
+            });
             renderReviewModal(response.data, orderId);
             document.getElementById('reviewModal').classList.remove('hidden');
         } else {
             if (response.message === 'Authentication required') {
-                showError('Please log in to write reviews');
+                customerAPI.utils.showNotification('Please log in to write reviews', 'error');
                 setTimeout(() => {
                     window.location.href = '../login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
                 }, 2000);
             } else {
-                showError('Failed to load reviewable items: ' + response.message);
+                customerAPI.utils.showNotification('Failed to load reviewable items: ' + response.message, 'error');
             }
         }
         
     } catch (error) {
         console.error('Failed to load reviewable items:', error);
-        showError('Network error. Please check your connection and try again.');
+        customerAPI.utils.showNotification('Network error. Please check your connection and try again.', 'error');
     }
 }
 
@@ -685,13 +758,19 @@ function initializeStarRatings() {
         
         stars.forEach((star, index) => {
             star.addEventListener('mouseenter', () => {
-                highlightStars(stars, index + 1);
+                // Only show hover effect if no rating is selected yet
+                if (!container.getAttribute('data-selected')) {
+                    highlightStars(stars, index + 1);
+                }
             });
         });
         
         container.addEventListener('mouseleave', () => {
-            const currentRating = parseInt(container.dataset.rating);
-            highlightStars(stars, currentRating);
+            // Only revert if no rating is selected, otherwise keep the selected rating
+            if (!container.getAttribute('data-selected')) {
+                const currentRating = parseInt(container.dataset.rating);
+                highlightStars(stars, currentRating);
+            }
         });
     });
 }
@@ -716,7 +795,19 @@ function setRating(starElement, rating) {
     form.querySelector('input[name="rating"]').value = rating;
     
     const stars = container.querySelectorAll('.fas.fa-star');
-    highlightStars(stars, rating);
+    
+    // Update the visual state immediately and mark as selected
+    stars.forEach((star, index) => {
+        star.classList.remove('text-gray-300', 'text-yellow-400');
+        if (index < rating) {
+            star.classList.add('text-yellow-400');
+        } else {
+            star.classList.add('text-gray-300');
+        }
+    });
+    
+    // Mark container as having a selection to prevent hover interference
+    container.setAttribute('data-selected', 'true');
 }
 
 async function submitReview(event, productId, orderId) {
@@ -756,32 +847,326 @@ async function submitReview(event, productId, orderId) {
 }
 
 async function editReview(reviewId, productId, productName) {
-    // Implementation for editing reviews - could open a separate modal or inline edit
-    showError('Edit functionality coming soon');
+    try {
+        // Get current review data
+        const response = await customerAPI.reviews.getUserReviews({ review_id: reviewId });
+        
+        if (response.success && response.data && response.data.length > 0) {
+            const review = response.data[0];
+            renderEditReviewModal(review, productId, productName);
+            document.getElementById('editReviewModal').classList.remove('hidden');
+        } else {
+            showError('Failed to load review data: ' + (response.message || 'Unknown error'));
+        }
+        
+    } catch (error) {
+        console.error('Failed to load review data:', error);
+        showError('Failed to load review data');
+    }
 }
 
+// Variables to store delete context
+let pendingDeleteReviewId = null;
+let pendingDeleteProductId = null;
+
 async function deleteReview(reviewId, productId) {
-    if (!confirm('Are you sure you want to delete this review?')) {
+    // Store the review and product IDs for confirmation
+    pendingDeleteReviewId = reviewId;
+    pendingDeleteProductId = productId;
+    
+    // Show confirmation modal
+    document.getElementById('deleteConfirmModal').classList.remove('hidden');
+}
+
+async function confirmDeleteReview() {
+    if (!pendingDeleteReviewId) {
         return;
     }
     
+    console.log('Attempting to delete review ID:', pendingDeleteReviewId);
+    
     try {
-        const response = await customerAPI.reviews.deleteReview(reviewId);
+        const response = await customerAPI.reviews.deleteReview(pendingDeleteReviewId);
+        console.log('Delete API response:', response);
         
         if (response.success) {
-            showSuccess('Review deleted successfully');
-            // Refresh the current view
-            const urlOrderId = new URLSearchParams(window.location.search).get('order');
-            if (urlOrderId) {
-                showReviewModal(urlOrderId);
-            }
+            console.log('Delete successful - will reload page');
+            closeDeleteConfirmModal();
+            
+            // Show brief success message then reload
+            const notification = document.createElement('div');
+            notification.innerHTML = '<div class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">Review deleted successfully</div>';
+            document.body.appendChild(notification);
+            
+            // Reload page after brief delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
         } else {
-            showError('Failed to delete review: ' + response.message);
+            console.log('Delete failed:', response.message);
+            try {
+                customerAPI.utils.showNotification('Failed to delete review: ' + (response.message || 'Unknown error'), 'error');
+            } catch (notificationError) {
+                console.log('Notification error (ignored):', notificationError);
+            }
+            closeDeleteConfirmModal();
         }
         
     } catch (error) {
         console.error('Failed to delete review:', error);
-        showError('Failed to delete review');
+        try {
+            customerAPI.utils.showNotification('Failed to delete review', 'error');
+        } catch (notificationError) {
+            console.log('Notification error (ignored):', notificationError);
+        }
+        closeDeleteConfirmModal();
+    }
+}
+
+function closeDeleteConfirmModal() {
+    document.getElementById('deleteConfirmModal').classList.add('hidden');
+    // Clear pending delete data
+    pendingDeleteReviewId = null;
+    pendingDeleteProductId = null;
+}
+
+// Edit Review Modal Functions
+function closeEditReviewModal() {
+    document.getElementById('editReviewModal').classList.add('hidden');
+}
+
+function renderEditReviewModal(review, productId, productName) {
+    const container = document.getElementById('editReviewModalContent');
+    
+    const modalHTML = `
+        <div class="space-y-4">
+            <div class="flex items-center space-x-4 mb-6">
+                <div>
+                    <h3 class="font-medium text-gray-900">${productName}</h3>
+                    <p class="text-sm text-gray-600">Editing your review</p>
+                </div>
+            </div>
+            
+            <form onsubmit="submitEditReview(event, ${review.id}, ${productId})" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                    <div class="flex items-center space-x-1" data-rating="${review.rating}" data-selected="true">
+                        ${generateStarRating(review.rating, true)}
+                    </div>
+                    <input type="hidden" name="rating" value="${review.rating}" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Review Title</label>
+                    <input type="text" name="title" value="${escapeHtml(review.title || '')}" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                           placeholder="Summarize your experience">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Review Details (Optional)</label>
+                    <textarea name="review_text" rows="4" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                              placeholder="Share more about your experience with this product">${escapeHtml(review.review_text || '')}</textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeEditReviewModal()" 
+                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    container.innerHTML = modalHTML;
+    
+    // Initialize star ratings for edit modal
+    initializeStarRatings();
+}
+
+async function submitEditReview(event, reviewId, productId) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    const reviewData = {
+        rating: parseInt(formData.get('rating')),
+        title: formData.get('title'),
+        review_text: formData.get('review_text')
+    };
+    
+    if (reviewData.rating === 0) {
+        customerAPI.utils.showNotification('Please select a rating', 'error');
+        return;
+    }
+    
+    try {
+        const response = await customerAPI.reviews.updateReview(reviewId, reviewData);
+        
+        if (response.success) {
+            customerAPI.utils.showNotification('Review updated successfully', 'success');
+            closeEditReviewModal();
+            
+            // Force complete refresh of the review modal
+            const urlOrderId = new URLSearchParams(window.location.search).get('order');
+            if (urlOrderId) {
+                // Close the modal and clear its content
+                closeReviewModal();
+                document.getElementById('reviewModalContent').innerHTML = '';
+                
+                // Force fresh data load
+                setTimeout(async () => {
+                    console.log('Refreshing review modal after edit...');
+                    await showReviewModal(urlOrderId);
+                }, 200);
+            }
+        } else {
+            customerAPI.utils.showNotification('Failed to update review: ' + (response.message || 'Unknown error'), 'error');
+        }
+        
+    } catch (error) {
+        console.error('Failed to update review:', error);
+        customerAPI.utils.showNotification('Failed to update review', 'error');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function updateModalAfterDelete(deletedReviewId, orderId) {
+    console.log('Updating modal after deleting review ID:', deletedReviewId);
+    
+    // Find all review items in the modal (try different selectors)
+    let reviewItems = document.querySelectorAll('#reviewModalContent .border-gray-200');
+    if (reviewItems.length === 0) {
+        reviewItems = document.querySelectorAll('#reviewModalContent > div');
+    }
+    console.log('Found review items:', reviewItems.length);
+    
+    reviewItems.forEach((item, index) => {
+        console.log(`Checking item ${index}:`, item.innerHTML.substring(0, 200));
+        
+        // Check if this item contains the deleted review
+        const editButton = item.querySelector(`button[onclick*="editReview(${deletedReviewId}"]`);
+        const deleteButton = item.querySelector(`button[onclick*="deleteReview(${deletedReviewId}"]`);
+        
+        console.log(`Item ${index} - Edit button:`, editButton !== null, 'Delete button:', deleteButton !== null);
+        
+        if (editButton || deleteButton) {
+            console.log(`Found deleted review item at index ${index}, converting to new review form`);
+            
+            // Get the product name from the item
+            const productNameElement = item.querySelector('h4');
+            const productName = productNameElement ? productNameElement.textContent : 'Product';
+            
+            // Get the product image
+            const imgElement = item.querySelector('img');
+            const productImage = imgElement ? imgElement.src : '../images/no-image.png';
+            
+            // Replace the existing review section with a new review form
+            const existingReviewDiv = item.querySelector('.bg-gray-50');
+            if (existingReviewDiv) {
+                existingReviewDiv.outerHTML = `
+                    <!-- Review Form -->
+                    <form onsubmit="submitReview(event, ${deletedReviewId}, ${orderId})" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                            <div class="flex items-center space-x-1" data-rating="0">
+                                ${generateStarRating(0, true)}
+                            </div>
+                            <input type="hidden" name="rating" value="0" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Review Title</label>
+                            <input type="text" name="title" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                   placeholder="Summarize your experience">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Review Details (Optional)</label>
+                            <textarea name="review_text" rows="3" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                      placeholder="Share more about your experience with this product"></textarea>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                                <i class="fas fa-star mr-2"></i>
+                                Submit Review
+                            </button>
+                        </div>
+                    </form>
+                `;
+                
+                // Re-initialize star ratings for the new form
+                initializeStarRatings();
+                
+                console.log('Successfully converted review to new form');
+            }
+        }
+    });
+}
+
+async function refreshModalWithRetry(orderId, deletedReviewId, attempts = 0) {
+    console.log(`refreshModalWithRetry called - orderId: ${orderId}, deletedReviewId: ${deletedReviewId}, attempt: ${attempts + 1}`);
+    const maxAttempts = 3;
+    
+    try {
+        const timestamp = Date.now();
+        const response = await customerAPI.get('/reviews/list', { 
+            order_id: orderId,
+            _t: timestamp
+        });
+        
+        console.log('Retry fetch response:', response);
+        
+        if (response.success) {
+            // Check if the deleted review is still in the data
+            const reviewIds = response.data.map(item => item.review_id).filter(id => id !== null);
+            console.log('Current review IDs in response:', reviewIds);
+            console.log('Looking for deleted review ID:', deletedReviewId);
+            
+            const stillExists = response.data.some(item => item.review_id === deletedReviewId);
+            console.log('Does deleted review still exist?', stillExists);
+            
+            if (stillExists && attempts < maxAttempts) {
+                console.log(`Review ${deletedReviewId} still exists, retrying... (attempt ${attempts + 1})`);
+                setTimeout(() => {
+                    refreshModalWithRetry(orderId, deletedReviewId, attempts + 1);
+                }, 500);
+                return;
+            }
+            
+            console.log(`Review modal refreshed successfully (attempt ${attempts + 1})`);
+            renderReviewModal(response.data, orderId);
+            document.getElementById('reviewModal').classList.remove('hidden');
+        } else {
+            console.error('Failed to refresh modal:', response.message);
+            // Fallback to regular refresh
+            await showReviewModal(orderId);
+        }
+        
+    } catch (error) {
+        console.error('Error refreshing modal:', error);
+        if (attempts < maxAttempts) {
+            setTimeout(() => {
+                refreshModalWithRetry(orderId, deletedReviewId, attempts + 1);
+            }, 500);
+        }
     }
 }
 </script>

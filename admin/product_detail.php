@@ -105,6 +105,24 @@ $page_description = 'Product details for ' . htmlspecialchars($product['name']);
 include 'includes/layout_start.php';
 ?>
 
+<style>
+/* Star rating styles */
+.fe-star {
+    color: #e0e0e0; /* Empty star color */
+}
+.fe-star.fill {
+    color: #ffc107 !important; /* Filled star color - golden yellow */
+    text-shadow: 0 0 1px rgba(255, 193, 7, 0.5);
+}
+.text-warning .fe-star {
+    color: #e0e0e0; /* Empty stars */
+}
+.text-warning .fe-star.fill {
+    color: #ffc107 !important; /* Filled stars */
+    text-shadow: 0 0 1px rgba(255, 193, 7, 0.5);
+}
+</style>
+
 <div class="row align-items-center mb-2">
     <div class="col">
         <nav aria-label="breadcrumb">
@@ -337,14 +355,18 @@ include 'includes/layout_start.php';
                                 <strong><?php echo htmlspecialchars($review['first_name'] . ' ' . $review['last_name']); ?></strong>
                                 <div class="text-warning">
                                     <?php for ($i = 1; $i <= 5; $i++): ?>
-                                        <i class="fe fe-star<?php echo $i <= $review['rating'] ? ' fill' : ''; ?>"></i>
+                                        <?php if ($i <= $review['rating']): ?>
+                                            <span style="color: #ffc107; font-size: 14px;">★</span>
+                                        <?php else: ?>
+                                            <span style="color: #e0e0e0; font-size: 14px;">★</span>
+                                        <?php endif; ?>
                                     <?php endfor; ?>
                                 </div>
                             </div>
                             <small class="text-muted"><?php echo date('M d, Y', strtotime($review['created_at'])); ?></small>
                         </div>
-                        <?php if (!empty($review['comment'])): ?>
-                            <p class="mb-0"><?php echo nl2br(htmlspecialchars($review['comment'])); ?></p>
+                        <?php if (!empty($review['review_text'])): ?>
+                            <p class="mb-0"><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -396,7 +418,7 @@ include 'includes/layout_start.php';
                             <h4 class="mb-0 text-warning">
                                 <?php if ($product['review_count'] > 0): ?>
                                     <?php echo number_format($product['avg_rating'], 1); ?>
-                                    <i class="fe fe-star fill text-warning" style="font-size: 0.8em;"></i>
+                                    <span style="color: #ffc107; font-size: 0.8em;">★</span>
                                 <?php else: ?>
                                     N/A
                                 <?php endif; ?>

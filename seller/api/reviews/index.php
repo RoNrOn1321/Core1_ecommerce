@@ -1,6 +1,7 @@
 <?php
-require_once '../../../config/database.php';
+require_once '../../config/database.php';
 require_once '../../includes/auth.php';
+require_once '../../includes/response.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -13,11 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Check authentication
-if (!isSellerLoggedIn()) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Authentication required']);
-    exit();
-}
+$auth = new SellerAuth($pdo);
+$auth->requireLogin();
 
 $sellerId = $_SESSION['seller_id'];
 $method = $_SERVER['REQUEST_METHOD'];
