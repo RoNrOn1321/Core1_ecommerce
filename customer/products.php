@@ -266,6 +266,18 @@ if (session_status() === PHP_SESSION_NONE) {
                     </div>
                 </div>
     
+                <!-- Featured Filter -->
+                <div style="min-width: 15rem; flex: 1;">
+                    <label for="featuredFilter" class="filter-label">
+                        <i class="fas fa-star"></i>
+                        featured
+                    </label>
+                    <select id="featuredFilter" class="filter-select">
+                        <option value="">all products</option>
+                        <option value="1">featured only</option>
+                    </select>
+                </div>
+
                 <!-- Sort By -->
                 <div style="min-width: 18rem; flex: 1;">
                     <label for="sortBy" class="filter-label">
@@ -375,6 +387,7 @@ if (session_status() === PHP_SESSION_NONE) {
             category: document.getElementById('categoryFilter').value,
             min_price: document.getElementById('minPrice').value,
             max_price: document.getElementById('maxPrice').value,
+            featured: document.getElementById('featuredFilter').value,
             sort_by: document.getElementById('sortBy').value.replace('_desc', ''),
             sort_order: document.getElementById('sortBy').value.includes('_desc') ? 'DESC' : 'ASC'
         };
@@ -424,7 +437,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     <img src="${getProductImage(product.images)}" alt="${product.name}" 
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div class="absolute top-4 right-4 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                    <div class="absolute top-4 right-4 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 z-10">
                         <button onclick="addToWishlist(${product.id})" title="Add to Wishlist"
                                 class="w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:text-red-500 hover:bg-white transition-all shadow-lg hover:scale-110">
                             <i class="fas fa-heart text-lg"></i>
@@ -435,6 +448,7 @@ if (session_status() === PHP_SESSION_NONE) {
                         </button>
                     </div>
                     ${product.category_name ? `<div class="absolute top-4 left-4 category-badge px-3 py-1 rounded-full text-sm font-medium">${product.category_name}</div>` : ''}
+                    ${product.featured ? `<div class="absolute top-16 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center"><i class="fas fa-star mr-1"></i>Featured</div>` : ''}
                 </div>
                 <div class="p-6">
                     <h3 class="font-bold text-xl text-gray-900 mb-2 line-clamp-2 group-hover:text-amber-600 transition-colors">${product.name}</h3>

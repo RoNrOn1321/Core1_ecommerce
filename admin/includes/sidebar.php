@@ -79,7 +79,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
             <li class="nav-item w-100">
-                <a class="nav-link <?php echo ($current_page == 'sellers.php') ? 'active' : ''; ?>" href="sellers.php">
+                <a class="nav-link <?php echo ($current_page == 'sellers.php' || $current_page == 'seller_detail.php') ? 'active' : ''; ?>" href="sellers.php">
                     <i class="fe fe-user-check fe-16"></i>
                     <span class="ml-3 item-text">Sellers</span>
                     <span class="badge badge-pill badge-warning ml-auto" data-notification="sellers" style="<?php echo $pending_sellers > 0 ? '' : 'display: none;'; ?>"><?php echo $pending_sellers; ?></span>

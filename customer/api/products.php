@@ -27,6 +27,7 @@ switch ($action) {
         $sellerId = $_GET['seller_id'] ?? null;
         $minPrice = $_GET['min_price'] ?? null;
         $maxPrice = $_GET['max_price'] ?? null;
+        $featured = $_GET['featured'] ?? null;
         $sortBy = $_GET['sort_by'] ?? 'created_at';
         $sortOrder = strtoupper($_GET['sort_order'] ?? 'DESC');
         
@@ -74,6 +75,10 @@ switch ($action) {
                 $params[] = floatval($maxPrice);
             }
             
+            if ($featured !== null && $featured === '1') {
+                $where[] = "p.featured = 1";
+            }
+            
             $whereClause = implode(' AND ', $where);
             
             // Get total count
@@ -99,6 +104,7 @@ switch ($action) {
                     p.stock_quantity,
                     p.stock_status,
                     p.sku,
+                    p.featured,
                     p.created_at,
                     c.name as category_name,
                     c.slug as category_slug,
@@ -125,6 +131,7 @@ switch ($action) {
             foreach ($products as &$product) {
                 $product['price'] = floatval($product['price']);
                 $product['stock_quantity'] = intval($product['stock_quantity']);
+                $product['featured'] = intval($product['featured']);
                 $product['images'] = $product['images'] ? explode(',', $product['images']) : [];
                 $product['in_stock'] = $product['stock_quantity'] > 0 && $product['stock_status'] === 'in_stock';
             }
@@ -192,6 +199,65 @@ switch ($action) {
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Failed to fetch categories: ' . $e->getMessage()]);
+        }
+        break;
+        
+    case 'featured':
+        if ($requestMethod !== 'GET') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            break;
+        }
+        
+        // Get query parameters
+        $limit = max(1, min(50, intval($_GET['limit'] ?? 8)));
+        
+        try {
+            // Get featured products
+            $sql = "
+                SELECT 
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.price,
+                    p.stock_quantity,
+                    p.stock_status,
+                    p.sku,
+                    p.created_at,
+                    c.name as category_name,
+                    c.slug as category_slug,
+                    s.store_name as seller_name,
+                    GROUP_CONCAT(pi.image_url) as images
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN sellers s ON p.seller_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id
+                WHERE p.status = 'published' AND p.featured = 1
+                GROUP BY p.id
+                ORDER BY p.updated_at DESC
+                LIMIT ?
+            ";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$limit]);
+            $products = $stmt->fetchAll();
+            
+            // Format products
+            foreach ($products as &$product) {
+                $product['price'] = floatval($product['price']);
+                $product['stock_quantity'] = intval($product['stock_quantity']);
+                $product['images'] = $product['images'] ? explode(',', $product['images']) : [];
+                $product['in_stock'] = $product['stock_quantity'] > 0 && $product['stock_status'] === 'in_stock';
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $products
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to fetch featured products: ' . $e->getMessage()]);
         }
         break;
         

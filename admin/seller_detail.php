@@ -1,7 +1,6 @@
 <?php
-session_start();
-require_once 'config/database.php';
 require_once 'config/auth.php';
+require_once 'config/database.php';
 
 requireAuth();
 
@@ -43,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get seller data with user information
 try {
     $stmt = $pdo->prepare("
-        SELECT s.*, u.first_name, u.last_name, u.email, u.phone, u.status as user_status, u.created_at as user_created_at
+        SELECT s.*, u.first_name, u.last_name, u.email, u.phone, u.status as user_status, u.created_at as user_created_at,
+               s.store_name as business_name, s.store_description as business_description
         FROM sellers s 
         JOIN users u ON s.user_id = u.id 
         WHERE s.id = ?
@@ -63,14 +63,15 @@ try {
 $products = [];
 try {
     $product_stmt = $pdo->prepare("
-        SELECT p.*, c.name as category_name 
+        SELECT p.*, c.name as category_name, pi.image_url 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.id 
+        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
         WHERE p.seller_id = ? 
         ORDER BY p.created_at DESC 
         LIMIT 10
     ");
-    $product_stmt->execute([$seller['user_id']]);
+    $product_stmt->execute([$seller_id]);
     $products = $product_stmt->fetchAll();
 } catch (PDOException $e) {
     // Handle error silently
@@ -89,7 +90,7 @@ try {
         ORDER BY o.created_at DESC 
         LIMIT 10
     ");
-    $order_stmt->execute([$seller['user_id']]);
+    $order_stmt->execute([$seller_id]);
     $orders = $order_stmt->fetchAll();
 } catch (PDOException $e) {
     // Handle error silently
@@ -111,7 +112,7 @@ try {
             COUNT(CASE WHEN status = 'published' THEN 1 END) as active_products
         FROM products WHERE seller_id = ?
     ");
-    $product_stats->execute([$seller['user_id']]);
+    $product_stats->execute([$seller_id]);
     $product_data = $product_stats->fetch();
     $stats['total_products'] = $product_data['total_products'];
     $stats['active_products'] = $product_data['active_products'];
@@ -126,109 +127,21 @@ try {
         JOIN products p ON oi.product_id = p.id 
         WHERE p.seller_id = ?
     ");
-    $order_stats->execute([$seller['user_id']]);
+    $order_stats->execute([$seller_id]);
     $order_data = $order_stats->fetch();
     $stats['total_orders'] = $order_data['total_orders'];
     $stats['total_revenue'] = $order_data['total_revenue'];
 } catch (PDOException $e) {
     // Handle error silently
 }
+
+// Page-specific variables
+$page_title = 'Seller Details - ' . htmlspecialchars($seller['business_name'] ?? 'Unknown Business');
+$page_description = 'Detailed view and management of seller account';
+
+// Include layout start
+include 'includes/layout_start.php';
 ?>
-
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Seller Details - LuminoAdmin">
-    <meta name="author" content="Lumino Team">
-    <title>Seller Details - <?= htmlspecialchars($seller['business_name'] ?? 'Unknown Business') ?></title>
-    <!-- Simple bar CSS -->
-    <link rel="stylesheet" href="css/simplebar.css">
-    <!-- Fonts CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100;0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-    <!-- Icons CSS -->
-    <link rel="stylesheet" href="css/feather.css">
-    <!-- App CSS -->
-    <link rel="stylesheet" href="css/app-light.css" id="lightTheme">
-</head>
-<body class="vertical light">
-    <div class="wrapper">
-        <!-- Sidebar -->
-        <aside class="sidebar-left border-right bg-white shadow" id="leftSidebar" data-simplebar>
-            <nav class="vertnav navbar navbar-light">
-                <!-- Logo -->
-                <div class="w-100 mb-4 d-flex">
-                    <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="dashboard.php">
-                        <svg version="1.1" id="logo" class="navbar-brand-img brand-sm" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 120 120" xml:space="preserve">
-                            <g>
-                                <polygon class="st0" points="78,105 15,105 24,87 87,87" />
-                                <polygon class="st0" points="96,69 33,69 42,51 105,51" />
-                                <polygon class="st0" points="78,33 15,33 24,15 87,15" />
-                            </g>
-                        </svg>
-                    </a>
-                </div>
-                
-                <!-- Navigation Menu -->
-                <ul class="navbar-nav flex-fill w-100 mb-2">
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="dashboard.php">
-                            <i class="fe fe-home fe-16"></i>
-                            <span class="ml-3 item-text">Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="users.php">
-                            <i class="fe fe-users fe-16"></i>
-                            <span class="ml-3 item-text">Users</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link active" href="sellers.php">
-                            <i class="fe fe-user-check fe-16"></i>
-                            <span class="ml-3 item-text">Sellers</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="products.php">
-                            <i class="fe fe-package fe-16"></i>
-                            <span class="ml-3 item-text">Products</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="orders.php">
-                            <i class="fe fe-shopping-cart fe-16"></i>
-                            <span class="ml-3 item-text">Orders</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="support.php">
-                            <i class="fe fe-headphones fe-16"></i>
-                            <span class="ml-3 item-text">Support</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="reports.php">
-                            <i class="fe fe-bar-chart-2 fe-16"></i>
-                            <span class="ml-3 item-text">Reports</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="settings.php">
-                            <i class="fe fe-settings fe-16"></i>
-                            <span class="ml-3 item-text">Settings</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <main role="main" class="main-content">
-            <div class="container-fluid">
-                <div class="row justify-content-center">
-                    <div class="col-12">
                         <div class="row align-items-center mb-2">
                             <div class="col">
                                 <h2 class="h5 page-title">Seller Details</h2>
@@ -373,8 +286,8 @@ try {
                                                 <td><?= htmlspecialchars($seller['business_type']) ?></td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Business Registration:</strong></td>
-                                                <td><?= htmlspecialchars($seller['business_registration'] ?? 'Not provided') ?></td>
+                                                <td><strong>Store Slug:</strong></td>
+                                                <td><?= htmlspecialchars($seller['store_slug'] ?? 'Not provided') ?></td>
                                             </tr>
                                             <tr>
                                                 <td><strong>Tax ID:</strong></td>
@@ -397,8 +310,8 @@ try {
                                                 <td><?= htmlspecialchars($seller['phone'] ?? 'Not provided') ?></td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Business Address:</strong></td>
-                                                <td><?= htmlspecialchars($seller['business_address'] ?? 'Not provided') ?></td>
+                                                <td><strong>Store Status:</strong></td>
+                                                <td><span class="badge bg-<?= $seller['status'] === 'approved' ? 'success' : 'warning' ?>"><?= ucfirst($seller['status']) ?></span></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -509,35 +422,22 @@ try {
                             </div>
                         </div>
                         <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
+<?php
+// Inline JavaScript for page-specific functionality
+$inline_js = '
+function toggleRejectionReason() {
+    const status = document.getElementById("status").value;
+    const rejectionField = document.getElementById("rejection-reason-field");
+    
+    if (status === "rejected") {
+        rejectionField.style.display = "block";
+        document.getElementById("rejection_reason").required = true;
+    } else {
+        rejectionField.style.display = "none";
+        document.getElementById("rejection_reason").required = false;
+    }
+}';
 
-    <script src="js/jquery.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/moment.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/simplebar.min.js"></script>
-    <script src='js/daterangepicker.js'></script>
-    <script src='js/jquery.stickOnScroll.js'></script>
-    <script src="js/tinycolor-min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/apps.js"></script>
-    <script>
-        function toggleRejectionReason() {
-            const status = document.getElementById('status').value;
-            const rejectionField = document.getElementById('rejection-reason-field');
-            
-            if (status === 'rejected') {
-                rejectionField.style.display = 'block';
-                document.getElementById('rejection_reason').required = true;
-            } else {
-                rejectionField.style.display = 'none';
-                document.getElementById('rejection_reason').required = false;
-            }
-        }
-    </script>
-</body>
-</html>
+// Include layout end
+include 'includes/layout_end.php';
+?>

@@ -131,6 +131,10 @@ const customerAPI = {
             return customerAPI.get('/products/categories');
         },
 
+        async getFeatured(limit = 8) {
+            return customerAPI.get('/products/featured', { limit });
+        },
+
         async search(query) {
             return customerAPI.get('/products/search', { q: query });
         }

@@ -89,6 +89,21 @@ class ProductManager {
             $stmt->execute([$productId]);
             $product['images'] = $stmt->fetchAll();
             
+            // Set primary image
+            $product['primary_image'] = null;
+            if (!empty($product['images'])) {
+                foreach ($product['images'] as $image) {
+                    if ($image['is_primary']) {
+                        $product['primary_image'] = $image['image_url'];
+                        break;
+                    }
+                }
+                // If no primary image found, use the first image
+                if (!$product['primary_image'] && !empty($product['images'])) {
+                    $product['primary_image'] = $product['images'][0]['image_url'];
+                }
+            }
+            
             // Get variants
             $stmt = $this->pdo->prepare("
                 SELECT * FROM product_variants 

@@ -364,7 +364,7 @@ include 'includes/layout_start.php';
                                                                     <a class="dropdown-item" href="product_detail.php?id=<?php echo $product['id']; ?>">
                                                                         <i class="fe fe-eye"></i> View Details
                                                                     </a>
-                                                                    <a class="dropdown-item" href="../customer/product_detail.php?id=<?php echo $product['id']; ?>" target="_blank">
+                                                                    <a class="dropdown-item" href="../customer/products/detail.php?id=<?php echo $product['id']; ?>" target="_blank">
                                                                         <i class="fe fe-external-link"></i> View on Store
                                                                     </a>
                                                                     <div class="dropdown-divider"></div>
