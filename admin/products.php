@@ -302,10 +302,11 @@ include 'includes/layout_start.php';
                                                                 <?php if (!empty($product['primary_image'])): ?>
                                                                     <img src="<?php echo htmlspecialchars($product['primary_image']); ?>" 
                                                                          alt="Product" class="avatar avatar-sm rounded mr-2" 
-                                                                         style="object-fit: cover;">
+                                                                         style="width: 28px !important; height: 28px !important; object-fit: cover;">
                                                                 <?php else: ?>
-                                                                    <div class="avatar avatar-sm rounded mr-2 bg-light d-flex align-items-center justify-content-center">
-                                                                        <i class="fe fe-image text-muted"></i>
+                                                                    <div class="avatar avatar-sm rounded mr-2 bg-light d-flex align-items-center justify-content-center" 
+                                                                         style="width: 28px; height: 28px; min-width: 28px;">
+                                                                        <i class="fe fe-image text-muted" style="font-size: 12px;"></i>
                                                                     </div>
                                                                 <?php endif; ?>
                                                                 <div>

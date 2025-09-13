@@ -270,15 +270,29 @@ include 'includes/layout_start.php';
                             </div>
                         </div>
 
-                        <!-- Sales Chart -->
+                        <!-- Sales Charts -->
                         <div class="row">
-                            <div class="col-12 mb-4">
+                            <div class="col-md-8 mb-4">
                                 <div class="card shadow">
                                     <div class="card-header">
-                                        <strong class="card-title">Daily Sales Trend</strong>
+                                        <strong class="card-title">Daily Revenue Trend</strong>
                                     </div>
                                     <div class="card-body">
-                                        <canvas id="salesChart" width="400" height="100"></canvas>
+                                        <div style="height: 350px;">
+                                            <canvas id="salesChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header">
+                                        <strong class="card-title">Daily Orders</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height: 350px;">
+                                            <canvas id="ordersChart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -461,74 +475,147 @@ include 'includes/layout_start.php';
     <script src="js/apps.js"></script>
     
     <script>
-    // Sales Chart
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const salesData = <?php echo json_encode($daily_sales); ?>;
-    
-    const chartLabels = salesData.map(item => {
-        const date = new Date(item.date);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-    
-    const chartRevenue = salesData.map(item => parseFloat(item.revenue) || 0);
-    const chartOrders = salesData.map(item => parseInt(item.orders) || 0);
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartLabels,
-            datasets: [{
-                label: 'Revenue (₱)',
-                data: chartRevenue,
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                tension: 0.1,
-                yAxisID: 'y'
-            }, {
-                label: 'Orders',
-                data: chartOrders,
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                tension: 0.1,
-                yAxisID: 'y1'
-            }]
-        },
-        options: {
-            responsive: true,
-            interaction: {
-                mode: 'index',
-                intersect: false,
+    // Sales Chart - Simplified for compatibility
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('salesChart');
+        if (!ctx) {
+            console.error('Chart canvas not found');
+            return;
+        }
+        
+        const salesData = <?php echo json_encode($daily_sales); ?>;
+        console.log('Sales Data:', salesData);
+        
+        // Check if we have data
+        if (!salesData || salesData.length === 0) {
+            ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><p>No sales data available for the selected date range.</p></div>';
+            return;
+        }
+        
+        const chartLabels = salesData.map(item => {
+            const date = new Date(item.date);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        
+        const chartRevenue = salesData.map(item => parseFloat(item.revenue) || 0);
+        
+        console.log('Chart Labels:', chartLabels);
+        console.log('Chart Revenue:', chartRevenue);
+        
+        // Create single-axis chart for revenue
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Daily Revenue (₱)',
+                    data: chartRevenue,
+                    borderColor: '#4BC0C0',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.1,
+                    pointBackgroundColor: '#4BC0C0',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
             },
-            scales: {
-                x: {
-                    display: true,
-                    title: {
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
                         display: true,
-                        text: 'Date'
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Revenue: ₱' + Number(context.parsed.y).toLocaleString();
+                            }
+                        }
                     }
                 },
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: {
+                scales: {
+                    x: {
                         display: true,
-                        text: 'Revenue (₱)'
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue (₱)'
+                        },
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + Number(value).toLocaleString();
+                            }
+                        }
                     }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: 'Orders'
-                    },
-                    grid: {
-                        drawOnChartArea: false,
-                    },
                 }
             }
+        });
+        
+        // Orders Chart
+        const ordersCtx = document.getElementById('ordersChart');
+        if (ordersCtx && salesData && salesData.length > 0) {
+            const chartOrders = salesData.map(item => parseInt(item.orders) || 0);
+            
+            new Chart(ordersCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Daily Orders',
+                        data: chartOrders,
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                        borderColor: '#FF6384',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Orders: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Orders'
+                            },
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
         }
     });
     </script>

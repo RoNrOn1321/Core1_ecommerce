@@ -24,6 +24,8 @@
     <!-- App CSS -->
     <link rel="stylesheet" href="css/app-light.css" id="lightTheme">
     <link rel="stylesheet" href="css/app-dark.css" id="darkTheme" disabled>
+    <!-- Notifications CSS -->
+    <link rel="stylesheet" href="css/notifications.css">
     <?php if (isset($additional_css)): ?>
         <?php foreach ($additional_css as $css_file): ?>
             <link rel="stylesheet" href="<?php echo $css_file; ?>">

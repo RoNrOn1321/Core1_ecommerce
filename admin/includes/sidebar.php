@@ -17,12 +17,22 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total_orders FROM orders");
     $total_orders = $stmt->fetch()['total_orders'];
     
+    // Pending orders (for notification badge)
+    $stmt = $pdo->query("SELECT COUNT(*) as pending_orders FROM orders WHERE status = 'pending'");
+    $pending_orders = $stmt->fetch()['pending_orders'];
+    
+    // Open support tickets (for notification badge)
+    $stmt = $pdo->query("SELECT COUNT(*) as open_tickets FROM support_tickets WHERE status IN ('open', 'in_progress')");
+    $open_tickets = $stmt->fetch()['open_tickets'];
+    
 } catch (PDOException $e) {
     // If database is not ready, set default values
     $total_users = 0;
     $pending_sellers = 0;
     $total_products = 0;
     $total_orders = 0;
+    $pending_orders = 0;
+    $open_tickets = 0;
 }
 
 // Get current page to highlight active menu item
@@ -60,36 +70,35 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <a class="nav-link <?php echo ($current_page == 'users.php') ? 'active' : ''; ?>" href="users.php">
                     <i class="fe fe-users fe-16"></i>
                     <span class="ml-3 item-text">Users</span>
-                    <span class="badge badge-pill badge-secondary ml-auto"><?php echo $total_users; ?></span>
+                    <span class="badge badge-pill badge-secondary ml-auto" data-notification="users"><?php echo $total_users; ?></span>
                 </a>
             </li>
             <li class="nav-item w-100">
                 <a class="nav-link <?php echo ($current_page == 'sellers.php') ? 'active' : ''; ?>" href="sellers.php">
                     <i class="fe fe-user-check fe-16"></i>
                     <span class="ml-3 item-text">Sellers</span>
-                    <?php if ($pending_sellers > 0): ?>
-                        <span class="badge badge-pill badge-warning ml-auto"><?php echo $pending_sellers; ?></span>
-                    <?php endif; ?>
+                    <span class="badge badge-pill badge-warning ml-auto" data-notification="sellers" style="<?php echo $pending_sellers > 0 ? '' : 'display: none;'; ?>"><?php echo $pending_sellers; ?></span>
                 </a>
             </li>
             <li class="nav-item w-100">
                 <a class="nav-link <?php echo ($current_page == 'products.php') ? 'active' : ''; ?>" href="products.php">
                     <i class="fe fe-package fe-16"></i>
                     <span class="ml-3 item-text">Products</span>
-                    <span class="badge badge-pill badge-secondary ml-auto"><?php echo $total_products; ?></span>
+                    <span class="badge badge-pill badge-secondary ml-auto" data-notification="products"><?php echo $total_products; ?></span>
                 </a>
             </li>
             <li class="nav-item w-100">
                 <a class="nav-link <?php echo ($current_page == 'orders.php') ? 'active' : ''; ?>" href="orders.php">
                     <i class="fe fe-shopping-cart fe-16"></i>
                     <span class="ml-3 item-text">Orders</span>
-                    <span class="badge badge-pill badge-secondary ml-auto"><?php echo $total_orders; ?></span>
+                    <span class="badge badge-pill badge-warning ml-auto" data-notification="orders" style="<?php echo $pending_orders > 0 ? '' : 'display: none;'; ?>"><?php echo $pending_orders; ?></span>
                 </a>
             </li>
             <li class="nav-item w-100">
                 <a class="nav-link <?php echo ($current_page == 'support.php') ? 'active' : ''; ?>" href="support.php">
                     <i class="fe fe-headphones fe-16"></i>
                     <span class="ml-3 item-text">Support</span>
+                    <span class="badge badge-pill badge-danger ml-auto" data-notification="support" style="<?php echo $open_tickets > 0 ? '' : 'display: none;'; ?>"><?php echo $open_tickets; ?></span>
                 </a>
             </li>
             <li class="nav-item w-100">

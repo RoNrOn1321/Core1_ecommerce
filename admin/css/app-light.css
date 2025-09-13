@@ -7684,17 +7684,43 @@ select {
   .avatars-list > li + li {
     margin-left: -0.75rem; }
 
+.avatar-sm {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  overflow: hidden; }
+
+/* Placeholder icon container should be slightly larger */
+.avatar-sm.bg-light {
+  width: 20px;
+  height: 20px; }
+
 .avatar-sm img {
-  width: 32px; }
+  width: 16px !important;
+  height: 16px !important;
+  object-fit: cover; }
+
+/* Specific rule for product table images */
+.table .avatar-sm img {
+  width: 16px !important;
+  height: 16px !important;
+  object-fit: cover !important;
+  border-radius: 2px; }
 
 .avatar-md img {
-  width: 48px; }
+  width: 36px;
+  height: 36px;
+  object-fit: cover; }
 
 .avatar-lg img {
-  width: 64px; }
+  width: 48px;
+  height: 48px;
+  object-fit: cover; }
 
 .avatar-xl img {
-  width: 110px; }
+  width: 64px;
+  height: 64px;
+  object-fit: cover; }
 
 .squircle {
   height: 84px;
