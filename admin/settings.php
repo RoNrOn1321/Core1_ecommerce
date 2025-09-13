@@ -125,21 +125,15 @@ try {
     $admin_users = [];
     $system_stats = ['total_users' => 0, 'total_sellers' => 0, 'total_products' => 0, 'total_orders' => 0, 'total_tickets' => 0];
 }
+
+// Page-specific variables
+$page_title = 'Admin Settings';
+$page_description = 'Manage system settings and admin users';
+$additional_css = ['css/daterangepicker.css'];
+
+// Include layout start
+include 'includes/layout_start.php';
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Settings - Lumino Admin</title>
-    <!-- CSS files -->
-    <link rel="stylesheet" href="css/simplebar.css">
-    <link href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100;0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/feather.css">
-    <link rel="stylesheet" href="css/daterangepicker.css">
-    <link rel="stylesheet" href="css/app-light.css" id="lightTheme">
-    <link rel="stylesheet" href="css/app-dark.css" id="darkTheme" disabled>
-</head>
 <body class="vertical light">
     <div class="wrapper">
         <!-- Top Navigation -->
@@ -572,15 +566,4 @@ try {
         </main>
     </div>
 
-    <script src="js/jquery.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/moment.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/simplebar.min.js"></script>
-    <script src='js/daterangepicker.js'></script>
-    <script src='js/jquery.stickOnScroll.js'></script>
-    <script src="js/tinycolor-min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/apps.js"></script>
-</body>
-</html>
+<?php include 'includes/layout_end.php'; ?>

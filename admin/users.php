@@ -82,133 +82,15 @@ try {
     $total_users = 0;
     $total_pages = 0;
 }
+
+// Page-specific variables
+$page_title = 'Users Management';
+$page_description = 'Manage all users in the Core1 E-commerce platform';
+$additional_css = ['css/dataTables.bootstrap4.css'];
+
+// Include layout start
+include 'includes/layout_start.php';
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Users Management - Lumino Admin</title>
-    <!-- CSS files -->
-    <link rel="stylesheet" href="css/simplebar.css">
-    <link href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100;0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/feather.css">
-    <link rel="stylesheet" href="css/dataTables.bootstrap4.css">
-    <link rel="stylesheet" href="css/daterangepicker.css">
-    <link rel="stylesheet" href="css/app-light.css" id="lightTheme">
-    <link rel="stylesheet" href="css/app-dark.css" id="darkTheme" disabled>
-</head>
-<body class="vertical light">
-    <div class="wrapper">
-        <!-- Top Navigation -->
-        <nav class="topnav navbar navbar-light">
-            <button type="button" class="navbar-toggler text-muted mt-2 p-0 mr-3 collapseSidebar">
-                <i class="fe fe-menu navbar-toggler-icon"></i>
-            </button>
-            <form class="form-inline mr-auto searchform text-muted">
-                <input class="form-control mr-sm-2 bg-transparent border-0 pl-4 text-muted" type="search" placeholder="Search..." aria-label="Search">
-            </form>
-            <ul class="nav">
-                <li class="nav-item">
-                    <a class="nav-link text-muted my-2" href="#" id="modeSwitcher" data-mode="light">
-                        <i class="fe fe-sun fe-16"></i>
-                    </a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle text-muted pr-0" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span class="avatar avatar-sm mt-2">
-                            <img src="assets/avatars/face-1.jpg" alt="<?php echo htmlspecialchars(getAdminName()); ?>" class="avatar-img rounded-circle">
-                        </span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                        <h6 class="dropdown-header"><?php echo htmlspecialchars(getAdminName()); ?></h6>
-                        <a class="dropdown-item" href="profile.php">Profile</a>
-                        <a class="dropdown-item" href="settings.php">Settings</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="logout.php">Logout</a>
-                    </div>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Sidebar -->
-        <aside class="sidebar-left border-right bg-white shadow" id="leftSidebar" data-simplebar>
-            <a href="#" class="btn collapseSidebar toggle-btn d-lg-none text-muted ml-2 mt-3" data-toggle="toggle">
-                <i class="fe fe-x"><span class="sr-only"></span></i>
-            </a>
-            <nav class="vertnav navbar navbar-light">
-                <!-- Logo -->
-                <div class="w-100 mb-4 d-flex">
-                    <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="dashboard.php">
-                        <svg version="1.1" id="logo" class="navbar-brand-img brand-sm" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 120 120" xml:space="preserve">
-                            <g>
-                                <polygon class="st0" points="78,105 15,105 24,87 87,87" />
-                                <polygon class="st0" points="96,69 33,69 42,51 105,51" />
-                                <polygon class="st0" points="78,33 15,33 24,15 87,15" />
-                            </g>
-                        </svg>
-                    </a>
-                </div>
-                
-                <!-- Navigation Menu -->
-                <ul class="navbar-nav flex-fill w-100 mb-2">
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="dashboard.php">
-                            <i class="fe fe-home fe-16"></i>
-                            <span class="ml-3 item-text">Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link active" href="users.php">
-                            <i class="fe fe-users fe-16"></i>
-                            <span class="ml-3 item-text">Users</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="sellers.php">
-                            <i class="fe fe-user-check fe-16"></i>
-                            <span class="ml-3 item-text">Sellers</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="products.php">
-                            <i class="fe fe-package fe-16"></i>
-                            <span class="ml-3 item-text">Products</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="orders.php">
-                            <i class="fe fe-shopping-cart fe-16"></i>
-                            <span class="ml-3 item-text">Orders</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="support.php">
-                            <i class="fe fe-headphones fe-16"></i>
-                            <span class="ml-3 item-text">Support</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="reports.php">
-                            <i class="fe fe-bar-chart-2 fe-16"></i>
-                            <span class="ml-3 item-text">Reports</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="settings.php">
-                            <i class="fe fe-settings fe-16"></i>
-                            <span class="ml-3 item-text">Settings</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <main role="main" class="main-content">
-            <div class="container-fluid">
-                <div class="row justify-content-center">
-                    <div class="col-12">
                         <div class="row align-items-center mb-2">
                             <div class="col">
                                 <h2 class="h5 page-title">Users Management</h2>
@@ -396,21 +278,4 @@ try {
                             </div>
                         </div>
 
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script src="js/jquery.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/moment.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/simplebar.min.js"></script>
-    <script src='js/daterangepicker.js'></script>
-    <script src='js/jquery.stickOnScroll.js'></script>
-    <script src="js/tinycolor-min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/apps.js"></script>
-</body>
-</html>
+<?php include 'includes/layout_end.php'; ?>
